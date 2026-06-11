@@ -95,7 +95,6 @@ export default function ListingDetailsPage({
 
             <div className="mt-8 rounded-2xl border bg-white p-6">
               <h2 className="font-bold">Description</h2>
-
               <p className="mt-3 text-slate-600">{listing.description}</p>
             </div>
 

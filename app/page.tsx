@@ -19,55 +19,66 @@ export default function Home() {
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <a href="/">
-  <img
-    src="/northstock-logo.png"
-    alt="NorthStock"
-    className="h-12 w-auto"
-  />
-</a>
+            <img src="/northstock-logo.png" alt="NorthStock" className="h-12 w-auto" />
+          </a>
 
           <nav className="hidden gap-8 text-sm font-medium text-slate-600 md:flex">
-            <a href="#">Browse Inventory</a>
-            <a href="#">How It Works</a>
-            <a href="#">For Sellers</a>
+            <a href="/listings">Browse Inventory</a>
+            <a href="/list-inventory">List Inventory</a>
+            <a href="#contact">Contact</a>
           </nav>
 
-          <a
-  href="/list-inventory"
-  className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
->
-  List Inventory
-</a>
+          <div className="flex items-center gap-3">
+            <a href="/login" className="text-sm font-semibold text-slate-700">
+              Log In
+            </a>
+            <a
+              href="/login"
+              className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+            >
+              Create Free Account
+            </a>
+          </div>
         </div>
       </header>
 
       <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
+            <p className="mb-4 inline-flex rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-700">
+              Free account registration
+            </p>
+
             <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
               Buy and sell business inventory across Canada.
             </h1>
 
             <p className="mt-6 max-w-xl text-lg text-slate-600">
               Search office furniture, restaurant equipment, and contractor
-              tools from verified businesses and sellers.
+              tools from businesses and sellers across Canada.
             </p>
 
-            <div className="mt-8 flex max-w-2xl gap-3 rounded-2xl border bg-white p-2 shadow-sm">
-              <input
-                type="text"
-                placeholder="Search office chairs, prep tables, DeWalt tools..."
-                className="flex-1 rounded-xl px-4 outline-none"
-              />
-              <button className="rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white">
-                Search
-              </button>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <a
+                href="/login"
+                className="rounded-xl bg-slate-950 px-6 py-4 text-center font-semibold text-white"
+              >
+                Create Free Account
+              </a>
+
+              <a
+                href="/listings"
+                className="rounded-xl border bg-white px-6 py-4 text-center font-semibold text-slate-950"
+              >
+                Browse Inventory
+              </a>
             </div>
 
-            <div className="mt-8 grid max-w-xl grid-cols-3 gap-4 text-sm text-slate-600">
-              <div>Verified sellers</div>
-              <div>Local inventory</div>
-              <div>Direct quotes</div>
+            <div className="mt-8 grid max-w-xl grid-cols-2 gap-4 text-sm text-slate-600 md:grid-cols-4">
+              <div>Free signup</div>
+              <div>Browse inventory</div>
+              <div>Request quotes</div>
+              <div>No buyer fees</div>
             </div>
           </div>
 
@@ -91,9 +102,9 @@ export default function Home() {
                       <p className="font-semibold">{item}</p>
                       <p className="text-sm text-slate-500">Available now</p>
                     </div>
-                    <button className="rounded-lg border px-3 py-2 text-sm">
+                    <a href="/listings" className="rounded-lg border px-3 py-2 text-sm">
                       View
-                    </button>
+                    </a>
                   </div>
                 ))}
               </div>
@@ -105,26 +116,54 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="mb-8 flex items-end justify-between">
           <h2 className="text-3xl font-bold">Browse by category</h2>
-          <a className="text-sm font-semibold text-slate-700" href="#">
+          <a className="text-sm font-semibold text-slate-700" href="/listings">
             View all
           </a>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
           {categories.map((category) => (
-            <div
+            <a
+              href="/listings"
               key={category.title}
               className="rounded-3xl border bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
             >
               <h3 className="text-2xl font-bold">{category.title}</h3>
               <p className="mt-3 text-slate-600">{category.description}</p>
-              <button className="mt-6 font-semibold text-slate-950">
-                Browse →
-              </button>
-            </div>
+              <p className="mt-6 font-semibold text-slate-950">Browse →</p>
+            </a>
           ))}
         </div>
       </section>
+
+      <footer id="contact" className="border-t bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-10">
+          <img src="/northstock-logo.png" alt="NorthStock" className="h-10 w-auto" />
+
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            <div>
+              <h3 className="font-bold">NorthStock</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                A marketplace for business inventory across Canada.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-bold">Contact Us</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Email: info@northstock.ca
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-bold">Categories</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Office Furniture · Restaurant Equipment · Contractor Tools
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
