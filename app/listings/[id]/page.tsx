@@ -1,19 +1,53 @@
+"use client";
+
+import { use, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default async function ListingDetailsPage({
+export default function ListingDetailsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const { id } = use(params);
+  const [listing, setListing] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const { data: listing, error } = await supabase
-    .from("listings")
-    .select("*")
-    .eq("id", id)
-    .single();
+  useEffect(() => {
+    async function loadListing() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  if (error || !listing) {
+      if (!user) {
+        window.location.href = "/login";
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (!error) {
+        setListing(data);
+      }
+
+      setLoading(false);
+    }
+
+    loadListing();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#f7f8fa] p-10">
+        <p>Loading...</p>
+      </main>
+    );
+  }
+
+  if (!listing) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] p-10">
         <h1 className="text-2xl font-bold">Listing not found</h1>

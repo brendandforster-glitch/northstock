@@ -1,16 +1,52 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default async function ListingsPage() {
-  const { data: listings, error } = await supabase
-    .from("listings")
-    .select("*")
-    .order("created_at", { ascending: false });
+type Listing = {
+  id: string;
+  title: string;
+  category: string;
+  quantity: number;
+  city: string;
+  description: string;
+  image_url: string | null;
+};
 
-  if (error) {
+export default function ListingsPage() {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function checkUserAndLoadListings() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        window.location.href = "/login";
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setListings(data);
+      }
+
+      setLoading(false);
+    }
+
+    checkUserAndLoadListings();
+  }, []);
+
+  if (loading) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] p-10">
-        <h1 className="text-2xl font-bold">Error loading listings</h1>
-        <p className="mt-2 text-slate-600">{error.message}</p>
+        <p>Loading inventory...</p>
       </main>
     );
   }
@@ -19,8 +55,12 @@ export default async function ListingsPage() {
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <a href="/" className="text-2xl font-bold">
-            NorthStock
+          <a href="/">
+            <img
+              src="/northstock-logo.png"
+              alt="NorthStock"
+              className="h-12 w-auto"
+            />
           </a>
 
           <a href="/" className="text-sm font-semibold text-slate-600">
@@ -75,7 +115,7 @@ export default async function ListingsPage() {
           </div>
 
           <div className="space-y-5">
-            {listings && listings.length > 0 ? (
+            {listings.length > 0 ? (
               listings.map((item) => (
                 <div
                   key={item.id}

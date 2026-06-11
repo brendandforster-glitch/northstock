@@ -18,7 +18,13 @@ export default function Home() {
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <div className="text-2xl font-bold tracking-tight">NorthStock</div>
+          <a href="/">
+  <img
+    src="/northstock-logo.png"
+    alt="NorthStock"
+    className="h-12 w-auto"
+  />
+</a>
 
           <nav className="hidden gap-8 text-sm font-medium text-slate-600 md:flex">
             <a href="#">Browse Inventory</a>
