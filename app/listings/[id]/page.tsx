@@ -3,14 +3,28 @@
 import { use, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+type Listing = {
+  id: string;
+  title: string;
+  category: string;
+  quantity: number;
+  city: string;
+  description: string;
+  image_url: string | null;
+  status: string | null;
+  expires_at: string | null;
+};
+
 export default function ListingDetailsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [listing, setListing] = useState<any>(null);
+  const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unavailable, setUnavailable] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     async function loadListing() {
@@ -27,17 +41,54 @@ export default function ListingDetailsPage({
         .from("listings")
         .select("*")
         .eq("id", id)
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
         .single();
 
-      if (!error) {
-        setListing(data);
+      if (error || !data) {
+        setUnavailable(true);
+        setLoading(false);
+        return;
       }
 
+      setListing(data);
       setLoading(false);
     }
 
     loadListing();
   }, [id]);
+
+  const requestQuote = async () => {
+    if (!listing) return;
+
+    setSubmitting(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user?.email) {
+      setSubmitting(false);
+      window.location.href = "/login";
+      return;
+    }
+
+    const { error } = await supabase.from("leads").insert([
+      {
+        listing_id: listing.id,
+        buyer_email: user.email,
+      },
+    ]);
+
+    setSubmitting(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Quote request sent successfully!");
+  };
 
   if (loading) {
     return (
@@ -47,10 +98,13 @@ export default function ListingDetailsPage({
     );
   }
 
-  if (!listing) {
+  if (unavailable || !listing) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] p-10">
-        <h1 className="text-2xl font-bold">Listing not found</h1>
+        <h1 className="text-2xl font-bold">Listing no longer available</h1>
+        <p className="mt-2 text-slate-600">
+          This inventory may have expired, sold, or been removed.
+        </p>
         <a href="/listings" className="mt-4 inline-block text-slate-600">
           ← Back to listings
         </a>
@@ -98,8 +152,12 @@ export default function ListingDetailsPage({
               <p className="mt-3 text-slate-600">{listing.description}</p>
             </div>
 
-            <button className="mt-8 w-full rounded-2xl bg-slate-950 py-4 text-lg font-semibold text-white">
-              Request Quote
+            <button
+              onClick={requestQuote}
+              disabled={submitting}
+              className="mt-8 w-full rounded-2xl bg-slate-950 py-4 text-lg font-semibold text-white disabled:opacity-50"
+            >
+              {submitting ? "Sending Request..." : "Request Quote"}
             </button>
           </div>
         </div>

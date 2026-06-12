@@ -11,11 +11,18 @@ type Listing = {
   city: string;
   description: string;
   image_url: string | null;
+  status: string | null;
+  expires_at: string | null;
 };
 
 export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
 
   useEffect(() => {
     async function checkUserAndLoadListings() {
@@ -31,6 +38,8 @@ export default function ListingsPage() {
       const { data, error } = await supabase
         .from("listings")
         .select("*")
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false });
 
       if (!error && data) {
@@ -63,9 +72,18 @@ export default function ListingsPage() {
             />
           </a>
 
-          <a href="/" className="text-sm font-semibold text-slate-600">
-            Home
-          </a>
+          <div className="flex items-center gap-4">
+            <a href="/" className="text-sm font-semibold text-slate-600">
+              Home
+            </a>
+
+            <button
+              onClick={handleLogout}
+              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
@@ -109,7 +127,7 @@ export default function ListingsPage() {
             <div>
               <h1 className="text-3xl font-bold">Inventory</h1>
               <p className="mt-1 text-slate-600">
-                Showing live listings from your NorthStock database
+                Showing active, non-expired NorthStock listings
               </p>
             </div>
           </div>
@@ -159,7 +177,7 @@ export default function ListingsPage() {
               ))
             ) : (
               <div className="rounded-3xl border bg-white p-8 text-slate-600">
-                No listings yet. Add inventory in Supabase to display it here.
+                No active listings available right now.
               </div>
             )}
           </div>
