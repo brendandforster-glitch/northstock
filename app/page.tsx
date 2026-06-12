@@ -19,7 +19,11 @@ export default function Home() {
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <a href="/">
-            <img src="/northstock-logo.png" alt="NorthStock" className="h-12 w-auto" />
+            <img
+              src="/northstock-logo.png"
+              alt="NorthStock"
+              className="h-12 w-auto"
+            />
           </a>
 
           <nav className="hidden gap-8 text-sm font-medium text-slate-600 md:flex">
@@ -55,7 +59,8 @@ export default function Home() {
 
             <p className="mt-6 max-w-xl text-lg text-slate-600">
               Search office furniture, restaurant equipment, and contractor
-              tools from businesses and sellers across Canada.
+              tools from businesses and sellers across Canada. Create a free
+              account, browse inventory, and request quotes with no buyer fees.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -102,7 +107,10 @@ export default function Home() {
                       <p className="font-semibold">{item}</p>
                       <p className="text-sm text-slate-500">Available now</p>
                     </div>
-                    <a href="/listings" className="rounded-lg border px-3 py-2 text-sm">
+                    <a
+                      href="/listings"
+                      className="rounded-lg border px-3 py-2 text-sm"
+                    >
                       View
                     </a>
                   </div>
@@ -137,30 +145,70 @@ export default function Home() {
       </section>
 
       <footer id="contact" className="border-t bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-10">
-          <img src="/northstock-logo.png" alt="NorthStock" className="h-10 w-auto" />
-
-          <div className="mt-6 grid gap-6 md:grid-cols-3">
+        <div className="mx-auto max-w-7xl px-6 py-12">
+          <div className="grid gap-10 md:grid-cols-4">
             <div>
-              <h3 className="font-bold">NorthStock</h3>
+              <img
+                src="/northstock-logo.png"
+                alt="NorthStock"
+                className="h-10 w-auto"
+              />
+
+              <h3 className="mt-6 font-bold">NorthStock</h3>
               <p className="mt-2 text-sm text-slate-600">
-                A marketplace for business inventory across Canada.
+                Canada&apos;s Commercial Inventory Marketplace.
               </p>
             </div>
 
             <div>
               <h3 className="font-bold">Contact Us</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Email: info@northstock.ca
-              </p>
+              <div className="mt-3 space-y-2 text-sm text-slate-600">
+                <p>
+                  Email:{" "}
+                  <a
+                    href="mailto:info@northstock.ca"
+                    className="font-semibold text-slate-700"
+                  >
+                    info@northstock.ca
+                  </a>
+                </p>
+                <p>
+                  Phone:{" "}
+                  <a
+                    href="tel:6132814203"
+                    className="font-semibold text-slate-700"
+                  >
+                    613-281-4203
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-bold">Marketplace</h3>
+              <div className="mt-3 space-y-2 text-sm text-slate-600">
+                <p>
+                  <a href="/listings">Browse Inventory</a>
+                </p>
+                <p>
+                  <a href="/list-inventory">List Inventory</a>
+                </p>
+                <p>
+                  <a href="/login">Login</a>
+                </p>
+              </div>
             </div>
 
             <div>
               <h3 className="font-bold">Categories</h3>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-3 text-sm text-slate-600">
                 Office Furniture · Restaurant Equipment · Contractor Tools
               </p>
             </div>
+          </div>
+
+          <div className="mt-10 border-t pt-6 text-sm text-slate-500">
+            © 2026 NorthStock. All rights reserved.
           </div>
         </div>
       </footer>
