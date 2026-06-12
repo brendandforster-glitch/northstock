@@ -27,7 +27,11 @@ export default function LoginPage() {
     <main className="min-h-screen bg-[#f7f8fa] flex items-center justify-center px-6">
       <div className="w-full max-w-md rounded-3xl border bg-white p-8 shadow-sm">
         <a href="/">
-          <img src="/northstock-logo.png" alt="NorthStock" className="h-12 w-auto" />
+          <img
+            src="/northstock-logo.png"
+            alt="NorthStock"
+            className="h-12 w-auto"
+          />
         </a>
 
         <h1 className="mt-8 text-3xl font-bold">Log in to NorthStock</h1>
@@ -37,6 +41,7 @@ export default function LoginPage() {
 
         <div className="mt-8 space-y-4">
           <input
+            value={email}
             className="w-full rounded-xl border p-4"
             placeholder="Email"
             type="email"
@@ -44,6 +49,7 @@ export default function LoginPage() {
           />
 
           <input
+            value={password}
             className="w-full rounded-xl border p-4"
             placeholder="Password"
             type="password"
@@ -63,6 +69,15 @@ export default function LoginPage() {
           >
             Create Account
           </button>
+
+          <div className="text-center">
+            <a
+              href="/forgot-password"
+              className="text-sm font-semibold text-slate-600 hover:text-slate-950"
+            >
+              Forgot your password?
+            </a>
+          </div>
         </div>
       </div>
     </main>
