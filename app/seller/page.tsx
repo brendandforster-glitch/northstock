@@ -23,6 +23,7 @@ export default function SellerPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [quoteRequests, setQuoteRequests] = useState(0);
 
   async function loadListings() {
     setLoading(true);
@@ -46,6 +47,22 @@ export default function SellerPage() {
 
     if (!error && data) {
       setListings(data);
+
+      const listingIds = data.map((listing) => listing.id);
+
+      if (listingIds.length > 0) {
+        const { count } = await supabase
+          .from("leads")
+          .select("*", { count: "exact", head: true })
+          .in("listing_id", listingIds);
+
+        setQuoteRequests(count || 0);
+      } else {
+        setQuoteRequests(0);
+      }
+    } else {
+      setListings([]);
+      setQuoteRequests(0);
     }
 
     setLoading(false);
@@ -94,6 +111,7 @@ export default function SellerPage() {
   async function renewListing(id: string) {
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + 30);
+    expiry.setHours(23, 59, 59, 999);
 
     const { error } = await supabase
       .from("listings")
@@ -114,6 +132,7 @@ export default function SellerPage() {
   async function renewAllListings() {
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + 30);
+    expiry.setHours(23, 59, 59, 999);
 
     const { error } = await supabase
       .from("listings")
@@ -180,20 +199,34 @@ export default function SellerPage() {
           </a>
 
           <div className="flex items-center gap-4">
-            <a
-              href="/listings"
-              className="text-sm font-semibold text-slate-700"
-            >
-              Browse Inventory
-            </a>
+  <a
+    href="/listings"
+    className="text-sm font-semibold text-slate-700"
+  >
+    Browse Inventory
+  </a>
 
-            <a
-              href="/list-inventory"
-              className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Add Inventory
-            </a>
-          </div>
+  <a
+    href="/company"
+    className="text-sm font-semibold text-slate-700"
+  >
+    Company Profile
+  </a>
+
+  <a
+    href="/seller/leads"
+    className="text-sm font-semibold text-slate-700"
+  >
+    Quote Requests
+  </a>
+
+  <a
+    href="/list-inventory"
+    className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+  >
+    Add Inventory
+  </a>
+</div>
         </div>
       </header>
 
@@ -205,7 +238,7 @@ export default function SellerPage() {
           </p>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
+        <div className="mb-8 grid gap-4 md:grid-cols-4">
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
             <p className="text-sm text-slate-500">Total Listings</p>
             <h2 className="mt-2 text-3xl font-bold">{listings.length}</h2>
@@ -222,6 +255,13 @@ export default function SellerPage() {
             <p className="text-sm text-slate-500">Expired Listings</p>
             <h2 className="mt-2 text-3xl font-bold text-red-600">
               {expiredListings}
+            </h2>
+          </div>
+
+          <div className="rounded-3xl border bg-white p-6 shadow-sm">
+            <p className="text-sm text-slate-500">Quote Requests</p>
+            <h2 className="mt-2 text-3xl font-bold text-blue-600">
+              {quoteRequests}
             </h2>
           </div>
         </div>

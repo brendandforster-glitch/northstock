@@ -79,6 +79,90 @@ export default function ListInventoryPage() {
     return new Date(`${dateValue}T23:59:59`).toISOString();
   };
 
+  const getCoordinates = async (cityValue: string, provinceValue: string) => {
+    const { data } = await supabase
+      .from("city_coordinates")
+      .select("latitude, longitude")
+      .ilike("city", cityValue.trim())
+      .eq("province", provinceValue.trim())
+      .maybeSingle();
+
+    return {
+      latitude: data?.latitude ?? null,
+      longitude: data?.longitude ?? null,
+    };
+  };
+
+  const formatExcelRows = async (rows: any[], userId: string) => {
+    const formattedRows = await Promise.all(
+      rows.map(async (row: any) => {
+        const rawExpiry =
+          row.expires_at || row.Expires_At || row.expiresAt || row.ExpiresAt;
+
+        const rowCity = row.city || row.City || "";
+        const rowProvince =
+          row.province || row.Province || row.state || row.State || "";
+
+        const coordinates = await getCoordinates(rowCity, rowProvince);
+
+        return {
+          user_id: userId,
+          title: row.title || row.Title || "",
+          category: row.category || row.Category || "",
+          description: row.description || row.Description || "",
+          quantity: Number(row.quantity || row.Quantity || 0),
+          city: rowCity,
+          province: rowProvince,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+          price: row.price || row.Price ? Number(row.price || row.Price) : null,
+          condition: row.condition || row.Condition || "",
+          brand: row.brand || row.Brand || "",
+          model: row.model || row.Model || "",
+          sku: row.sku || row.SKU || "",
+          image_url:
+            row.image_url ||
+            row.Image_URL ||
+            row.imageUrl ||
+            row.ImageUrl ||
+            null,
+          status: "active",
+          expires_at: rawExpiry
+            ? getExpiryFromDateInput(String(rawExpiry))
+            : getDefaultExpiry(),
+        };
+      })
+    );
+
+    return formattedRows;
+  };
+
+  const downloadExcelTemplate = () => {
+    const template = [
+      {
+        title: "Example Office Chair",
+        category: "Office Furniture",
+        description: "Used ergonomic office chair in good condition.",
+        quantity: 10,
+        city: "Vancouver",
+        province: "British Columbia",
+        price: 100,
+        condition: "Used",
+        brand: "Herman Miller",
+        model: "Aeron",
+        sku: "CHAIR-001",
+        image_url: "https://example.com/image.jpg",
+        expires_at: "",
+      },
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "NorthStock Template");
+    XLSX.writeFile(workbook, "northstock-inventory-template.xlsx");
+  };
+
   const handleSellerRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -139,6 +223,8 @@ export default function ListInventoryPage() {
       return;
     }
 
+    const coordinates = await getCoordinates(city, province);
+
     const { error } = await supabase.from("listings").insert([
       {
         user_id: user.id,
@@ -148,6 +234,8 @@ export default function ListInventoryPage() {
         quantity: Number(quantity),
         city,
         province,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
         price: price ? Number(price) : null,
         condition,
         brand,
@@ -168,7 +256,13 @@ export default function ListInventoryPage() {
       return;
     }
 
-    alert("Inventory listing added successfully.");
+    if (!coordinates.latitude || !coordinates.longitude) {
+      alert(
+        "Inventory listing added successfully, but no coordinates were found for this city. Radius search may not include this listing until the city is added to the coordinate table."
+      );
+    } else {
+      alert("Inventory listing added successfully.");
+    }
 
     setTitle("");
     setCategory("");
@@ -203,101 +297,6 @@ export default function ListInventoryPage() {
       alert("Please upload an Excel file first.");
       return;
     }
-    const replaceAllInventory = async () => {
-  if (excelRows.length === 0) {
-    alert("Please upload an Excel file first.");
-    return;
-  }
-
-  if (
-    !confirm(
-      "This will delete ALL of your current listings and replace them with the uploaded Excel file. Continue?"
-    )
-  ) {
-    return;
-  }
-
-  setUploadingExcel(true);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    alert("Please log in.");
-    setUploadingExcel(false);
-    return;
-  }
-
-  const deleteResult = await supabase
-    .from("listings")
-    .delete()
-    .eq("user_id", user.id);
-
-  if (deleteResult.error) {
-    alert(deleteResult.error.message);
-    setUploadingExcel(false);
-    return;
-  }
-
-  const formattedRows = excelRows.map((row: any) => {
-    const rawExpiry =
-      row.expires_at ||
-      row.Expires_At ||
-      row.expiresAt ||
-      row.ExpiresAt;
-
-    return {
-      user_id: user.id,
-      title: row.title || row.Title || "",
-      category: row.category || row.Category || "",
-      description: row.description || row.Description || "",
-      quantity: Number(row.quantity || row.Quantity || 0),
-      city: row.city || row.City || "",
-      province:
-        row.province ||
-        row.Province ||
-        row.state ||
-        row.State ||
-        "",
-      price:
-        row.price || row.Price
-          ? Number(row.price || row.Price)
-          : null,
-      condition: row.condition || row.Condition || "",
-      brand: row.brand || row.Brand || "",
-      model: row.model || row.Model || "",
-      sku: row.sku || row.SKU || "",
-      image_url:
-        row.image_url ||
-        row.Image_URL ||
-        row.imageUrl ||
-        row.ImageUrl ||
-        null,
-      status: "active",
-      expires_at: rawExpiry
-        ? getExpiryFromDateInput(String(rawExpiry))
-        : getDefaultExpiry(),
-    };
-  });
-
-  const insertResult = await supabase
-    .from("listings")
-    .insert(formattedRows);
-
-  setUploadingExcel(false);
-
-  if (insertResult.error) {
-    alert(insertResult.error.message);
-    return;
-  }
-
-  alert(
-    `${formattedRows.length} listings imported and inventory replaced successfully.`
-  );
-
-  setExcelRows([]);
-};
 
     setUploadingExcel(true);
 
@@ -311,34 +310,7 @@ export default function ListInventoryPage() {
       return;
     }
 
-    const formattedRows = excelRows.map((row: any) => {
-      const rawExpiry = row.expires_at || row.Expires_At || row.expiresAt || row.ExpiresAt;
-
-      return {
-        user_id: user.id,
-        title: row.title || row.Title || "",
-        category: row.category || row.Category || "",
-        description: row.description || row.Description || "",
-        quantity: Number(row.quantity || row.Quantity || 0),
-        city: row.city || row.City || "",
-        province: row.province || row.Province || row.state || row.State || "",
-        price: row.price || row.Price ? Number(row.price || row.Price) : null,
-        condition: row.condition || row.Condition || "",
-        brand: row.brand || row.Brand || "",
-        model: row.model || row.Model || "",
-        sku: row.sku || row.SKU || "",
-        image_url:
-          row.image_url ||
-          row.Image_URL ||
-          row.imageUrl ||
-          row.ImageUrl ||
-          null,
-        status: "active",
-        expires_at: rawExpiry
-          ? getExpiryFromDateInput(String(rawExpiry))
-          : getDefaultExpiry(),
-      };
-    });
+    const formattedRows = await formatExcelRows(excelRows, user.id);
 
     const { error } = await supabase.from("listings").insert(formattedRows);
 
@@ -351,45 +323,59 @@ export default function ListInventoryPage() {
 
     alert(`${formattedRows.length} listings imported successfully.`);
     setExcelRows([]);
-  };const replaceAllInventory = async () => {
-  if (excelRows.length === 0) {
-    alert("Please upload an Excel file first.");
-    return;
-  }
+  };
 
-  if (
-    !confirm(
-      "This will delete ALL of your current listings and replace them with the uploaded Excel file. Continue?"
-    )
-  ) {
-    return;
-  }
+  const replaceAllInventory = async () => {
+    if (excelRows.length === 0) {
+      alert("Please upload an Excel file first.");
+      return;
+    }
 
-  setUploadingExcel(true);
+    if (
+      !confirm(
+        "This will delete ALL of your current listings and replace them with the uploaded Excel file. Continue?"
+      )
+    ) {
+      return;
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    setUploadingExcel(true);
 
-  if (!user) {
-    alert("Please log in.");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("Please log in.");
+      setUploadingExcel(false);
+      return;
+    }
+
+    const deleteResult = await supabase
+      .from("listings")
+      .delete()
+      .eq("user_id", user.id);
+
+    if (deleteResult.error) {
+      alert(deleteResult.error.message);
+      setUploadingExcel(false);
+      return;
+    }
+
+    const formattedRows = await formatExcelRows(excelRows, user.id);
+
+    const insertResult = await supabase.from("listings").insert(formattedRows);
+
     setUploadingExcel(false);
-    return;
-  }
 
-  const deleteResult = await supabase
-    .from("listings")
-    .delete()
-    .eq("user_id", user.id);
+    if (insertResult.error) {
+      alert(insertResult.error.message);
+      return;
+    }
 
-  if (deleteResult.error) {
-    alert(deleteResult.error.message);
-    setUploadingExcel(false);
-    return;
-  }
-
-  await importExcelRows();
-};
+    alert(`${formattedRows.length} listings imported and inventory replaced successfully.`);
+    setExcelRows([]);
+  };
 
   if (authChecking) {
     return (
@@ -472,11 +458,18 @@ export default function ListInventoryPage() {
             The expires_at column is optional. Leave it blank to use the default 30-day expiry.
           </p>
 
+          <button
+            onClick={downloadExcelTemplate}
+            className="mt-6 w-full rounded-xl border border-slate-300 bg-white py-4 font-semibold text-slate-950"
+          >
+            Download NorthStock Excel Template
+          </button>
+
           <input
             type="file"
             accept=".xlsx,.xls"
             onChange={handleExcelUpload}
-            className="mt-6 w-full rounded-xl border border-slate-300 bg-white p-4 text-slate-950"
+            className="mt-5 w-full rounded-xl border border-slate-300 bg-white p-4 text-slate-950"
           />
 
           {excelRows.length > 0 && (
@@ -485,23 +478,22 @@ export default function ListInventoryPage() {
             </div>
           )}
 
-         <button
-  onClick={importExcelRows}
-  disabled={uploadingExcel || excelRows.length === 0}
-  className="mt-5 w-full rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50"
->
-  {uploadingExcel ? "Importing..." : "Import Excel Listings"}
-</button>
+          <button
+            onClick={importExcelRows}
+            disabled={uploadingExcel || excelRows.length === 0}
+            className="mt-5 w-full rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50"
+          >
+            {uploadingExcel ? "Importing..." : "Import Excel Listings"}
+          </button>
 
-<button
-  onClick={replaceAllInventory}
-  disabled={uploadingExcel || excelRows.length === 0}
-  className="mt-3 w-full rounded-xl bg-red-600 py-4 font-semibold text-white disabled:opacity-50"
->
-  Replace All My Listings
-</button>
-
-</section>
+          <button
+            onClick={replaceAllInventory}
+            disabled={uploadingExcel || excelRows.length === 0}
+            className="mt-3 w-full rounded-xl bg-red-600 py-4 font-semibold text-white disabled:opacity-50"
+          >
+            Replace All My Listings
+          </button>
+        </section>
 
         <section className="mt-10 rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
           <h2 className="text-2xl font-bold">Need Help Uploading?</h2>

@@ -19,72 +19,25 @@ type Listing = {
   brand: string | null;
   model: string | null;
   sku: string | null;
+  user_id: string;
+  latitude: number | null;
+  longitude: number | null;
+  company_name?: string;
 };
 
 const regions = [
-  "Alabama",
-  "Alaska",
-  "Arizona",
-  "Arkansas",
-  "California",
-  "Colorado",
-  "Connecticut",
-  "Delaware",
-  "Florida",
-  "Georgia",
-  "Hawaii",
-  "Idaho",
-  "Illinois",
-  "Indiana",
-  "Iowa",
-  "Kansas",
-  "Kentucky",
-  "Louisiana",
-  "Maine",
-  "Maryland",
-  "Massachusetts",
-  "Michigan",
-  "Minnesota",
-  "Mississippi",
-  "Missouri",
-  "Montana",
-  "Nebraska",
-  "Nevada",
-  "New Hampshire",
-  "New Jersey",
-  "New Mexico",
-  "New York",
-  "North Carolina",
-  "North Dakota",
-  "Ohio",
-  "Oklahoma",
-  "Oregon",
-  "Pennsylvania",
-  "Rhode Island",
-  "South Carolina",
-  "South Dakota",
-  "Tennessee",
-  "Texas",
-  "Utah",
-  "Vermont",
-  "Virginia",
-  "Washington",
-  "West Virginia",
-  "Wisconsin",
-  "Wyoming",
-  "British Columbia",
-  "Alberta",
-  "Saskatchewan",
-  "Manitoba",
-  "Ontario",
-  "Quebec",
-  "New Brunswick",
-  "Nova Scotia",
-  "Prince Edward Island",
-  "Newfoundland and Labrador",
-  "Yukon",
-  "Northwest Territories",
-  "Nunavut",
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+  "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
+  "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
+  "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
+  "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+  "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia",
+  "Washington", "West Virginia", "Wisconsin", "Wyoming",
+  "British Columbia", "Alberta", "Saskatchewan", "Manitoba", "Ontario",
+  "Quebec", "New Brunswick", "Nova Scotia", "Prince Edward Island",
+  "Newfoundland and Labrador", "Yukon", "Northwest Territories", "Nunavut",
 ];
 
 function formatPrice(price: number | null) {
@@ -111,13 +64,39 @@ export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [citySearch, setCitySearch] = useState("");
+  const [radiusKm, setRadiusKm] = useState("");
+  const [savingSearch, setSavingSearch] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
 
-  const loadListings = async (regionFilter = selectedRegion) => {
+  const addCompanyNames = async (items: Listing[]) => {
+    const listingsWithCompanies = await Promise.all(
+      items.map(async (listing) => {
+        const { data: company } = await supabase
+          .from("companies")
+          .select("company_name")
+          .eq("user_id", listing.user_id)
+          .maybeSingle();
+
+        return {
+          ...listing,
+          company_name: company?.company_name || "",
+        };
+      })
+    );
+
+    return listingsWithCompanies;
+  };
+
+  const loadListings = async (
+    regionFilter = selectedRegion,
+    cityFilter = citySearch,
+    radiusFilter = radiusKm
+  ) => {
     setLoading(true);
 
     const {
@@ -126,6 +105,45 @@ export default function ListingsPage() {
 
     if (!user) {
       window.location.href = "/login";
+      return;
+    }
+
+    if (cityFilter.trim() && radiusFilter) {
+      const { data: cityData } = await supabase
+        .from("city_coordinates")
+        .select("latitude, longitude")
+        .ilike("city", cityFilter.trim())
+        .eq("province", regionFilter)
+        .maybeSingle();
+
+      if (!cityData) {
+        setListings([]);
+        setLoading(false);
+        alert("City coordinates not found. Try selecting the matching province/state.");
+        return;
+      }
+
+      const { data, error } = await supabase.rpc("nearby_listings", {
+        search_lat: cityData.latitude,
+        search_lng: cityData.longitude,
+        radius_km: Number(radiusFilter),
+      });
+
+      if (!error && data) {
+        let filteredData = data as Listing[];
+
+        if (regionFilter) {
+          filteredData = filteredData.filter(
+            (item) => item.province === regionFilter
+          );
+        }
+
+        setListings(await addCompanyNames(filteredData));
+      } else {
+        setListings([]);
+      }
+
+      setLoading(false);
       return;
     }
 
@@ -140,10 +158,14 @@ export default function ListingsPage() {
       query = query.eq("province", regionFilter);
     }
 
+    if (cityFilter.trim()) {
+      query = query.ilike("city", `%${cityFilter.trim()}%`);
+    }
+
     const { data, error } = await query;
 
     if (!error && data) {
-      setListings(data);
+      setListings(await addCompanyNames(data as Listing[]));
     } else {
       setListings([]);
     }
@@ -152,16 +174,65 @@ export default function ListingsPage() {
   };
 
   useEffect(() => {
-    loadListings("");
+    loadListings("", "", "");
   }, []);
 
   const applyFilters = () => {
-    loadListings(selectedRegion);
+    loadListings(selectedRegion, citySearch, radiusKm);
   };
 
   const clearFilters = () => {
     setSelectedRegion("");
-    loadListings("");
+    setCitySearch("");
+    setRadiusKm("");
+    loadListings("", "", "");
+  };
+
+  const saveCurrentSearch = async () => {
+    setSavingSearch(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setSavingSearch(false);
+      window.location.href = "/login";
+      return;
+    }
+
+    const searchNameParts = [
+      citySearch ? citySearch : "",
+      selectedRegion ? selectedRegion : "",
+      radiusKm ? `${radiusKm} km` : "",
+    ].filter(Boolean);
+
+    const searchName =
+      searchNameParts.length > 0
+        ? searchNameParts.join(" · ")
+        : "All NorthStock Inventory";
+
+    const { error } = await supabase.from("saved_searches").insert([
+      {
+        user_id: user.id,
+        name: searchName,
+        category: "",
+        city: citySearch || "",
+        province: selectedRegion || "",
+        radius_km: radiusKm ? Number(radiusKm) : null,
+        keyword: "",
+        email_alerts_enabled: true,
+      },
+    ]);
+
+    setSavingSearch(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Search saved. Email alerts are enabled for this search.");
   };
 
   if (loading) {
@@ -187,6 +258,20 @@ export default function ListingsPage() {
           <div className="flex items-center gap-4">
             <a href="/" className="text-sm font-semibold text-slate-700">
               Home
+            </a>
+
+            <a
+              href="/saved-searches"
+              className="text-sm font-semibold text-slate-700"
+            >
+              Saved Searches
+            </a>
+
+            <a
+              href="/saved-listings"
+              className="text-sm font-semibold text-slate-700"
+            >
+              Saved Listings
             </a>
 
             <button
@@ -241,11 +326,54 @@ export default function ListingsPage() {
               </select>
             </div>
 
+            <div>
+              <p className="mb-3 text-sm font-semibold text-slate-800">
+                City Search
+              </p>
+
+              <input
+                value={citySearch}
+                onChange={(e) => setCitySearch(e.target.value)}
+                placeholder="Search city"
+                className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950 placeholder:text-slate-500"
+              />
+            </div>
+
+            <div>
+              <p className="mb-3 text-sm font-semibold text-slate-800">
+                Radius
+              </p>
+
+              <select
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950"
+              >
+                <option value="">No radius</option>
+                <option value="25">25 km</option>
+                <option value="50">50 km</option>
+                <option value="100">100 km</option>
+                <option value="250">250 km</option>
+              </select>
+
+              <p className="mt-2 text-xs text-slate-500">
+                Radius search requires a city and matching province/state.
+              </p>
+            </div>
+
             <button
               onClick={applyFilters}
               className="w-full rounded-xl bg-slate-950 py-3 font-semibold text-white"
             >
               Apply Filters
+            </button>
+
+            <button
+              onClick={saveCurrentSearch}
+              disabled={savingSearch}
+              className="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white disabled:opacity-50"
+            >
+              {savingSearch ? "Saving..." : "Save This Search"}
             </button>
 
             <button
@@ -262,7 +390,9 @@ export default function ListingsPage() {
             <div>
               <h1 className="text-3xl font-bold">Inventory</h1>
               <p className="mt-1 text-slate-700">
-                {selectedRegion
+                {citySearch && radiusKm
+                  ? `Showing listings within ${radiusKm} km of ${citySearch}`
+                  : selectedRegion
                   ? `Showing active listings in ${selectedRegion}`
                   : "Showing active, non-expired NorthStock listings across North America"}
               </p>
@@ -302,6 +432,12 @@ export default function ListingsPage() {
                     <p className="mt-2 text-lg font-bold text-slate-950">
                       {formatPrice(item.price)}
                     </p>
+
+                    {item.company_name && (
+                      <p className="mt-1 font-semibold text-slate-700">
+                        {item.company_name}
+                      </p>
+                    )}
 
                     <p className="mt-2 text-slate-700">
                       {item.city}

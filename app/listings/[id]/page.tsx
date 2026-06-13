@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 
 type Listing = {
   id: string;
+  user_id: string;
   title: string;
   category: string;
   quantity: number;
@@ -47,10 +48,15 @@ export default function ListingDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+
   const [listing, setListing] = useState<Listing | null>(null);
+  const [company, setCompany] = useState<any>(null);
+  const [sellerListings, setSellerListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [savingListing, setSavingListing] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     async function loadListing() {
@@ -78,6 +84,41 @@ export default function ListingDetailsPage({
       }
 
       setListing(data);
+
+      const { data: savedData } = await supabase
+        .from("saved_listings")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("listing_id", data.id)
+        .maybeSingle();
+
+      if (savedData) {
+        setIsSaved(true);
+      }
+
+      const { data: companyData } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("user_id", data.user_id)
+        .maybeSingle();
+
+      if (companyData) {
+        setCompany(companyData);
+      }
+
+      const { data: moreListings } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("user_id", data.user_id)
+        .neq("id", data.id)
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
+        .limit(6);
+
+      if (moreListings) {
+        setSellerListings(moreListings);
+      }
+
       setLoading(false);
     }
 
@@ -116,6 +157,45 @@ export default function ListingDetailsPage({
     alert("Quote request sent successfully!");
   };
 
+  const saveListing = async () => {
+    if (!listing) return;
+
+    setSavingListing(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setSavingListing(false);
+      window.location.href = "/login";
+      return;
+    }
+
+    const { error } = await supabase.from("saved_listings").insert([
+      {
+        user_id: user.id,
+        listing_id: listing.id,
+      },
+    ]);
+
+    setSavingListing(false);
+
+    if (error) {
+      if (error.message.includes("duplicate")) {
+        setIsSaved(true);
+        alert("This listing is already saved.");
+        return;
+      }
+
+      alert(error.message);
+      return;
+    }
+
+    setIsSaved(true);
+    alert("Listing saved.");
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] p-10">
@@ -141,9 +221,18 @@ export default function ListingDetailsPage({
   return (
     <main className="min-h-screen bg-[#f7f8fa]">
       <div className="mx-auto max-w-6xl px-6 py-10">
-        <a href="/listings" className="text-sm font-semibold text-slate-700">
-          ← Back to Listings
-        </a>
+        <div className="flex items-center justify-between">
+          <a href="/listings" className="text-sm font-semibold text-slate-700">
+            ← Back to Listings
+          </a>
+
+          <a
+            href="/saved-listings"
+            className="text-sm font-semibold text-slate-700"
+          >
+            Saved Listings
+          </a>
+        </div>
 
         <div className="mt-6 grid gap-8 lg:grid-cols-2">
           <div className="rounded-3xl border border-slate-300 bg-white p-4 shadow-sm">
@@ -177,6 +266,23 @@ export default function ListingDetailsPage({
               {listing.city}
               {listing.province ? `, ${listing.province}` : ""}
             </p>
+
+            {company && (
+              <div className="mt-6 rounded-2xl border border-slate-300 bg-white p-5">
+                <p className="text-sm text-slate-500">Sold By</p>
+
+                <h3 className="mt-1 text-lg font-bold">
+                  {company.company_name}
+                </h3>
+
+                <a
+                  href={`/company/${company.id}`}
+                  className="mt-3 inline-block text-sm font-semibold text-blue-600"
+                >
+                  View Seller Profile →
+                </a>
+              </div>
+            )}
 
             <div className="mt-6 grid gap-3 rounded-2xl border border-slate-300 bg-white p-6 text-slate-700 sm:grid-cols-2">
               <p>
@@ -228,12 +334,59 @@ export default function ListingDetailsPage({
             </div>
 
             <button
+              onClick={saveListing}
+              disabled={savingListing || isSaved}
+              className="mt-8 w-full rounded-2xl border border-slate-300 bg-white py-4 text-lg font-semibold text-slate-950 disabled:opacity-50"
+            >
+              {isSaved
+                ? "Saved"
+                : savingListing
+                ? "Saving..."
+                : "Save Listing"}
+            </button>
+
+            <button
               onClick={requestQuote}
               disabled={submitting}
-              className="mt-8 w-full rounded-2xl bg-slate-950 py-4 text-lg font-semibold text-white disabled:opacity-50"
+              className="mt-4 w-full rounded-2xl bg-slate-950 py-4 text-lg font-semibold text-white disabled:opacity-50"
             >
               {submitting ? "Sending Request..." : "Request Quote"}
             </button>
+
+            {sellerListings.length > 0 && company && (
+              <div className="mt-10">
+                <h2 className="text-2xl font-bold text-slate-950">
+                  More Listings From {company.company_name}
+                </h2>
+
+                <div className="mt-5 space-y-4">
+                  {sellerListings.map((item) => (
+                    <a
+                      key={item.id}
+                      href={`/listings/${item.id}`}
+                      className="block rounded-2xl border border-slate-300 bg-white p-5 shadow-sm hover:border-slate-500"
+                    >
+                      <p className="text-sm text-slate-500">
+                        {item.category}
+                      </p>
+
+                      <h3 className="mt-1 text-lg font-bold text-slate-950">
+                        {item.title}
+                      </h3>
+
+                      <p className="mt-2 text-slate-600">
+                        {item.city}
+                        {item.province ? `, ${item.province}` : ""}
+                      </p>
+
+                      <p className="mt-2 font-semibold text-slate-950">
+                        {formatPrice(item.price)}
+                      </p>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
