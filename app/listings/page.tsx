@@ -9,53 +9,165 @@ type Listing = {
   category: string;
   quantity: number;
   city: string;
+  province: string | null;
   description: string;
   image_url: string | null;
   status: string | null;
   expires_at: string | null;
+  price: number | null;
+  condition: string | null;
+  brand: string | null;
+  model: string | null;
+  sku: string | null;
 };
+
+const regions = [
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
+  "British Columbia",
+  "Alberta",
+  "Saskatchewan",
+  "Manitoba",
+  "Ontario",
+  "Quebec",
+  "New Brunswick",
+  "Nova Scotia",
+  "Prince Edward Island",
+  "Newfoundland and Labrador",
+  "Yukon",
+  "Northwest Territories",
+  "Nunavut",
+];
+
+function formatPrice(price: number | null) {
+  if (price === null || price === undefined) return "Contact for pricing";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
+function formatDate(dateString: string | null) {
+  if (!dateString) return "Not set";
+
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRegion, setSelectedRegion] = useState("");
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
 
-  useEffect(() => {
-    async function checkUserAndLoadListings() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  const loadListings = async (regionFilter = selectedRegion) => {
+    setLoading(true);
 
-      if (!user) {
-        window.location.href = "/login";
-        return;
-      }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      const { data, error } = await supabase
-        .from("listings")
-        .select("*")
-        .eq("status", "active")
-        .gt("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setListings(data);
-      }
-
-      setLoading(false);
+    if (!user) {
+      window.location.href = "/login";
+      return;
     }
 
-    checkUserAndLoadListings();
+    let query = supabase
+      .from("listings")
+      .select("*")
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false });
+
+    if (regionFilter) {
+      query = query.eq("province", regionFilter);
+    }
+
+    const { data, error } = await query;
+
+    if (!error && data) {
+      setListings(data);
+    } else {
+      setListings([]);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadListings("");
   }, []);
+
+  const applyFilters = () => {
+    loadListings(selectedRegion);
+  };
+
+  const clearFilters = () => {
+    setSelectedRegion("");
+    loadListings("");
+  };
 
   if (loading) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] p-10">
-        <p>Loading inventory...</p>
+        <p className="font-semibold text-slate-700">Loading inventory...</p>
       </main>
     );
   }
@@ -73,7 +185,7 @@ export default function ListingsPage() {
           </a>
 
           <div className="flex items-center gap-4">
-            <a href="/" className="text-sm font-semibold text-slate-600">
+            <a href="/" className="text-sm font-semibold text-slate-700">
               Home
             </a>
 
@@ -88,14 +200,16 @@ export default function ListingsPage() {
       </header>
 
       <section className="mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[280px_1fr]">
-        <aside className="rounded-3xl border bg-white p-6 shadow-sm">
+        <aside className="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold">Filters</h2>
 
           <div className="mt-6 space-y-6">
             <div>
-              <p className="mb-3 text-sm font-semibold">Category</p>
+              <p className="mb-3 text-sm font-semibold text-slate-800">
+                Category
+              </p>
 
-              <div className="space-y-2 text-sm text-slate-600">
+              <div className="space-y-2 text-sm text-slate-700">
                 <label className="block">
                   <input type="checkbox" /> Office Furniture
                 </label>
@@ -109,15 +223,36 @@ export default function ListingsPage() {
             </div>
 
             <div>
-              <p className="mb-3 text-sm font-semibold">Location</p>
-              <input
-                placeholder="City or province"
-                className="w-full rounded-xl border p-3 text-sm"
-              />
+              <p className="mb-3 text-sm font-semibold text-slate-800">
+                Province / State
+              </p>
+
+              <select
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950"
+              >
+                <option value="">All Provinces / States</option>
+                {regions.map((region) => (
+                  <option key={region} value={region}>
+                    {region}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <button className="w-full rounded-xl bg-slate-950 py-3 font-semibold text-white">
+            <button
+              onClick={applyFilters}
+              className="w-full rounded-xl bg-slate-950 py-3 font-semibold text-white"
+            >
               Apply Filters
+            </button>
+
+            <button
+              onClick={clearFilters}
+              className="w-full rounded-xl border border-slate-300 bg-white py-3 font-semibold text-slate-950"
+            >
+              Clear Filters
             </button>
           </div>
         </aside>
@@ -126,10 +261,16 @@ export default function ListingsPage() {
           <div className="mb-6 flex items-end justify-between">
             <div>
               <h1 className="text-3xl font-bold">Inventory</h1>
-              <p className="mt-1 text-slate-600">
-                Showing active, non-expired NorthStock listings
+              <p className="mt-1 text-slate-700">
+                {selectedRegion
+                  ? `Showing active listings in ${selectedRegion}`
+                  : "Showing active, non-expired NorthStock listings across North America"}
               </p>
             </div>
+
+            <p className="text-sm font-semibold text-slate-600">
+              {listings.length} listing{listings.length === 1 ? "" : "s"}
+            </p>
           </div>
 
           <div className="space-y-5">
@@ -137,9 +278,9 @@ export default function ListingsPage() {
               listings.map((item) => (
                 <div
                   key={item.id}
-                  className="grid gap-5 rounded-3xl border bg-white p-5 shadow-sm md:grid-cols-[180px_1fr_auto]"
+                  className="grid gap-5 rounded-3xl border border-slate-300 bg-white p-5 shadow-sm md:grid-cols-[180px_1fr_auto]"
                 >
-                  <div className="flex h-36 items-center justify-center rounded-2xl bg-slate-100 text-sm text-slate-400">
+                  <div className="flex h-36 items-center justify-center rounded-2xl bg-slate-100 text-sm text-slate-500">
                     {item.image_url ? (
                       <img
                         src={item.image_url}
@@ -152,17 +293,72 @@ export default function ListingsPage() {
                   </div>
 
                   <div>
-                    <p className="text-sm font-semibold text-slate-500">
+                    <p className="text-sm font-semibold text-slate-600">
                       {item.category}
                     </p>
 
                     <h2 className="mt-1 text-xl font-bold">{item.title}</h2>
 
-                    <p className="mt-2 text-slate-600">{item.city}</p>
-
-                    <p className="mt-2 text-sm text-slate-500">
-                      {item.quantity} available
+                    <p className="mt-2 text-lg font-bold text-slate-950">
+                      {formatPrice(item.price)}
                     </p>
+
+                    <p className="mt-2 text-slate-700">
+                      {item.city}
+                      {item.province ? `, ${item.province}` : ""}
+                    </p>
+
+                    <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                      <p>
+                        <span className="font-semibold text-slate-800">
+                          Quantity:
+                        </span>{" "}
+                        {item.quantity}
+                      </p>
+
+                      {item.condition && (
+                        <p>
+                          <span className="font-semibold text-slate-800">
+                            Condition:
+                          </span>{" "}
+                          {item.condition}
+                        </p>
+                      )}
+
+                      {item.brand && (
+                        <p>
+                          <span className="font-semibold text-slate-800">
+                            Brand:
+                          </span>{" "}
+                          {item.brand}
+                        </p>
+                      )}
+
+                      {item.model && (
+                        <p>
+                          <span className="font-semibold text-slate-800">
+                            Model:
+                          </span>{" "}
+                          {item.model}
+                        </p>
+                      )}
+
+                      {item.sku && (
+                        <p>
+                          <span className="font-semibold text-slate-800">
+                            SKU:
+                          </span>{" "}
+                          {item.sku}
+                        </p>
+                      )}
+
+                      <p>
+                        <span className="font-semibold text-slate-800">
+                          Expires:
+                        </span>{" "}
+                        {formatDate(item.expires_at)}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="flex flex-col items-end justify-between">
@@ -176,8 +372,8 @@ export default function ListingsPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-3xl border bg-white p-8 text-slate-600">
-                No active listings available right now.
+              <div className="rounded-3xl border border-slate-300 bg-white p-8 text-slate-700">
+                No active listings available for this filter.
               </div>
             )}
           </div>

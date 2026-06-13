@@ -1,3 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+
 const categories = [
   {
     title: "Office Furniture",
@@ -14,6 +19,25 @@ const categories = [
 ];
 
 export default function Home() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    async function checkUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      setLoggedIn(!!user);
+    }
+
+    checkUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
+
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <header className="border-b bg-white">
@@ -29,19 +53,44 @@ export default function Home() {
           <nav className="hidden gap-8 text-sm font-medium text-slate-600 md:flex">
             <a href="/listings">Browse Inventory</a>
             <a href="/list-inventory">List Inventory</a>
+            <a href="/seller">Seller Dashboard</a>
             <a href="#contact">Contact</a>
           </nav>
 
           <div className="flex items-center gap-3">
-            <a href="/login" className="text-sm font-semibold text-slate-700">
-              Log In
-            </a>
-            <a
-              href="/login"
-              className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Create Free Account
-            </a>
+            {loggedIn ? (
+              <>
+                <a
+                  href="/seller"
+                  className="text-sm font-semibold text-slate-700"
+                >
+                  Seller Dashboard
+                </a>
+
+                <button
+                  onClick={handleLogout}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <a
+                  href="/login"
+                  className="text-sm font-semibold text-slate-700"
+                >
+                  Log In
+                </a>
+
+                <a
+                  href="/login"
+                  className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Create Free Account
+                </a>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -54,29 +103,50 @@ export default function Home() {
             </p>
 
             <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
-              Buy and sell business inventory across Canada.
+              Buy and sell business inventory across North America.
             </h1>
 
             <p className="mt-6 max-w-xl text-lg text-slate-600">
               Search office furniture, restaurant equipment, and contractor
-              tools from businesses and sellers across Canada. Create a free
-              account, browse inventory, and request quotes with no buyer fees.
+              tools from businesses and sellers across North America. Create a
+              free account, browse inventory, and request quotes with no buyer
+              fees.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="/login"
-                className="rounded-xl bg-slate-950 px-6 py-4 text-center font-semibold text-white"
-              >
-                Create Free Account
-              </a>
+              {loggedIn ? (
+                <>
+                  <a
+                    href="/seller"
+                    className="rounded-xl bg-slate-950 px-6 py-4 text-center font-semibold text-white"
+                  >
+                    Seller Dashboard
+                  </a>
 
-              <a
-                href="/listings"
-                className="rounded-xl border bg-white px-6 py-4 text-center font-semibold text-slate-950"
-              >
-                Browse Inventory
-              </a>
+                  <a
+                    href="/listings"
+                    className="rounded-xl border bg-white px-6 py-4 text-center font-semibold text-slate-950"
+                  >
+                    Browse Inventory
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a
+                    href="/login"
+                    className="rounded-xl bg-slate-950 px-6 py-4 text-center font-semibold text-white"
+                  >
+                    Create Free Account
+                  </a>
+
+                  <a
+                    href="/listings"
+                    className="rounded-xl border bg-white px-6 py-4 text-center font-semibold text-slate-950"
+                  >
+                    Browse Inventory
+                  </a>
+                </>
+              )}
             </div>
 
             <div className="mt-8 grid max-w-xl grid-cols-2 gap-4 text-sm text-slate-600 md:grid-cols-4">
@@ -107,6 +177,7 @@ export default function Home() {
                       <p className="font-semibold">{item}</p>
                       <p className="text-sm text-slate-500">Available now</p>
                     </div>
+
                     <a
                       href="/listings"
                       className="rounded-lg border px-3 py-2 text-sm"
@@ -124,7 +195,11 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="mb-8 flex items-end justify-between">
           <h2 className="text-3xl font-bold">Browse by category</h2>
-          <a className="text-sm font-semibold text-slate-700" href="/listings">
+
+          <a
+            className="text-sm font-semibold text-slate-700"
+            href="/listings"
+          >
             View all
           </a>
         </div>
@@ -156,12 +231,13 @@ export default function Home() {
 
               <h3 className="mt-6 font-bold">NorthStock</h3>
               <p className="mt-2 text-sm text-slate-600">
-                Canada&apos;s Commercial Inventory Marketplace.
+                North America's Commercial Inventory Marketplace.
               </p>
             </div>
 
             <div>
               <h3 className="font-bold">Contact Us</h3>
+
               <div className="mt-3 space-y-2 text-sm text-slate-600">
                 <p>
                   Email:{" "}
@@ -172,6 +248,7 @@ export default function Home() {
                     info@northstock.ca
                   </a>
                 </p>
+
                 <p>
                   Phone:{" "}
                   <a
@@ -186,21 +263,25 @@ export default function Home() {
 
             <div>
               <h3 className="font-bold">Marketplace</h3>
+
               <div className="mt-3 space-y-2 text-sm text-slate-600">
                 <p>
                   <a href="/listings">Browse Inventory</a>
                 </p>
+
                 <p>
                   <a href="/list-inventory">List Inventory</a>
                 </p>
+
                 <p>
-                  <a href="/login">Login</a>
+                  <a href="/seller">Seller Dashboard</a>
                 </p>
               </div>
             </div>
 
             <div>
               <h3 className="font-bold">Categories</h3>
+
               <p className="mt-3 text-sm text-slate-600">
                 Office Furniture · Restaurant Equipment · Contractor Tools
               </p>
