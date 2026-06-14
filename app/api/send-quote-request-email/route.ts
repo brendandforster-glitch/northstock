@@ -30,11 +30,7 @@ export async function POST(request: Request) {
 
     console.log("SELLER EMAIL:", sellerEmail);
 
-    const recipients = [
-      sellerEmail,
-      "info@northstock.ca",
-      "brendandforster@gmail.com",
-    ].filter(Boolean);
+    const recipients = ["brendandforster@gmail.com"];
 
     console.log("RECIPIENTS:", recipients);
 
