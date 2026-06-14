@@ -151,11 +151,40 @@ export default function SellerPage() {
     loadListings();
   }
 
+  async function markSold(id: string) {
+    if (!confirm("Mark this listing as sold?")) return;
+
+    const { error } = await supabase
+      .from("listings")
+      .update({
+        status: "sold",
+      })
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    loadListings();
+  }
+
   const activeListings = listings.filter(
-    (listing) => listing.expires_at && new Date(listing.expires_at) > new Date()
+    (listing) =>
+      listing.status === "active" &&
+      listing.expires_at &&
+      new Date(listing.expires_at) > new Date()
   ).length;
 
-  const expiredListings = listings.length - activeListings;
+  const soldListings = listings.filter(
+    (listing) => listing.status === "sold"
+  ).length;
+
+  const expiredListings = listings.filter(
+    (listing) =>
+      listing.status !== "sold" &&
+      (!listing.expires_at || new Date(listing.expires_at) <= new Date())
+  ).length;
 
   const filteredListings = listings.filter((item) => {
     const search = searchTerm.toLowerCase().trim();
@@ -189,7 +218,7 @@ export default function SellerPage() {
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
           <a href="/">
             <img
               src="/northstock-logo.png"
@@ -198,35 +227,29 @@ export default function SellerPage() {
             />
           </a>
 
-          <div className="flex items-center gap-4">
-  <a
-    href="/listings"
-    className="text-sm font-semibold text-slate-700"
-  >
-    Browse Inventory
-  </a>
+          <div className="flex flex-wrap items-center gap-4">
+            <a href="/listings" className="text-sm font-bold text-slate-950">
+              Browse Inventory
+            </a>
 
-  <a
-    href="/company"
-    className="text-sm font-semibold text-slate-700"
-  >
-    Company Profile
-  </a>
+            <a href="/company" className="text-sm font-bold text-slate-950">
+              Company Profile
+            </a>
 
-  <a
-    href="/seller/leads"
-    className="text-sm font-semibold text-slate-700"
-  >
-    Quote Requests
-  </a>
+            <a
+              href="/seller/leads"
+              className="text-sm font-bold text-slate-950"
+            >
+              Quote Requests
+            </a>
 
-  <a
-    href="/list-inventory"
-    className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
-  >
-    Add Inventory
-  </a>
-</div>
+            <a
+              href="/list-inventory"
+              className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+            >
+              Add Inventory
+            </a>
+          </div>
         </div>
       </header>
 
@@ -238,7 +261,7 @@ export default function SellerPage() {
           </p>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-4">
+        <div className="mb-8 grid gap-4 md:grid-cols-5">
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
             <p className="text-sm text-slate-500">Total Listings</p>
             <h2 className="mt-2 text-3xl font-bold">{listings.length}</h2>
@@ -255,6 +278,13 @@ export default function SellerPage() {
             <p className="text-sm text-slate-500">Expired Listings</p>
             <h2 className="mt-2 text-3xl font-bold text-red-600">
               {expiredListings}
+            </h2>
+          </div>
+
+          <div className="rounded-3xl border bg-white p-6 shadow-sm">
+            <p className="text-sm text-slate-500">Sold Listings</p>
+            <h2 className="mt-2 text-3xl font-bold text-amber-600">
+              {soldListings}
             </h2>
           </div>
 
@@ -349,7 +379,7 @@ export default function SellerPage() {
                       )}
 
                       <p>
-                        <strong>Status:</strong> {item.status}
+                        <strong>Status:</strong> {item.status || "Not set"}
                       </p>
 
                       <p>
@@ -381,6 +411,13 @@ export default function SellerPage() {
                       className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold"
                     >
                       Renew
+                    </button>
+
+                    <button
+                      onClick={() => markSold(item.id)}
+                      className="rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white hover:bg-amber-600"
+                    >
+                      Mark Sold
                     </button>
 
                     <button
