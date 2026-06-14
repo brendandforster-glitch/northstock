@@ -273,30 +273,34 @@ export default function ListInventoryPage() {
 
     const coordinates = await getCoordinates(city, province);
 
-    const { error } = await supabase.from("listings").insert([
-      {
-        user_id: user.id,
-        title,
-        category,
-        description,
-        quantity: Number(quantity),
-        city,
-        province,
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
-        price: price ? Number(price) : null,
-        price_note: priceNote || null,
-        condition,
-        brand,
-        model,
-        sku,
-        image_url: imageUrl || null,
-        status: "active",
-        expires_at: expiresAt
-          ? getExpiryFromDateInput(expiresAt)
-          : getDefaultExpiry(),
-      },
-    ]);
+    const { data: insertedListing, error } = await supabase
+  .from("listings")
+  .insert([
+    {
+      user_id: user.id,
+      title,
+      category,
+      description,
+      quantity: Number(quantity),
+      city,
+      province,
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      price: price ? Number(price) : null,
+      price_note: priceNote || null,
+      condition,
+      brand,
+      model,
+      sku,
+      image_url: imageUrl || null,
+      status: "active",
+      expires_at: expiresAt
+        ? getExpiryFromDateInput(expiresAt)
+        : getDefaultExpiry(),
+    },
+  ])
+  .select()
+  .single();
 
     setSubmittingListing(false);
 
@@ -304,6 +308,25 @@ export default function ListInventoryPage() {
       alert(error.message);
       return;
     }
+    if (insertedListing) {
+  await fetch("/api/send-saved-search-alerts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      listingId: insertedListing.id,
+      title: insertedListing.title,
+      category: insertedListing.category,
+      city: insertedListing.city,
+      province: insertedListing.province,
+      brand: insertedListing.brand,
+      model: insertedListing.model,
+      sku: insertedListing.sku,
+      description: insertedListing.description,
+    }),
+  });
+}
 
     if (!coordinates.latitude || !coordinates.longitude) {
       alert(
