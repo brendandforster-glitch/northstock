@@ -14,28 +14,50 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  console.log("QUOTE EMAIL ROUTE HIT");
+
   try {
     const body = await request.json();
 
-    const { sellerEmail, buyerEmail, listingTitle, listingId } = body;
+    console.log("REQUEST BODY:", body);
+
+    const {
+      sellerEmail,
+      buyerEmail,
+      listingTitle,
+      listingId,
+    } = body;
+
+    console.log("SELLER EMAIL:", sellerEmail);
 
     const recipients = [
-  sellerEmail,
-  "info@northstock.ca",
-  "brendandforster@gmail.com",
-].filter(Boolean);
+      sellerEmail,
+      "info@northstock.ca",
+      "brendandforster@gmail.com",
+    ].filter(Boolean);
+
+    console.log("RECIPIENTS:", recipients);
 
     const data = await resend.emails.send({
       from: "NorthStock <onboarding@resend.dev>",
       to: recipients,
-      subject: `New Quote Request: ${listingTitle || "NorthStock Listing"}`,
+      subject: `New Quote Request: ${
+        listingTitle || "NorthStock Listing"
+      }`,
       html: `
         <h2>New Quote Request</h2>
 
         <p>You received a new quote request on NorthStock.</p>
 
-        <p><strong>Listing:</strong> ${listingTitle || "Unknown listing"}</p>
-        <p><strong>Buyer Email:</strong> ${buyerEmail || "Unknown buyer"}</p>
+        <p>
+          <strong>Listing:</strong>
+          ${listingTitle || "Unknown listing"}
+        </p>
+
+        <p>
+          <strong>Buyer Email:</strong>
+          ${buyerEmail || "Unknown buyer"}
+        </p>
 
         <p>
           <a href="https://northstock.ca/listings/${listingId || ""}">
@@ -53,8 +75,23 @@ export async function POST(request: Request) {
       `,
     });
 
-    return Response.json({ data, error: null });
+    console.log("RESEND RESPONSE:", data);
+
+    return Response.json({
+      data,
+      error: null,
+    });
   } catch (error) {
-    return Response.json({ data: null, error }, { status: 500 });
+    console.error("EMAIL ROUTE ERROR:", error);
+
+    return Response.json(
+      {
+        data: null,
+        error,
+      },
+      {
+        status: 500,
+      }
+    );
   }
 }
