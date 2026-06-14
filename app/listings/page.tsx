@@ -25,6 +25,12 @@ type Listing = {
   company_name?: string;
 };
 
+const categories = [
+  "Office Furniture",
+  "Restaurant Equipment",
+  "Contractor Tools",
+];
+
 const regions = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
   "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
@@ -67,11 +73,20 @@ export default function ListingsPage() {
   const [citySearch, setCitySearch] = useState("");
   const [radiusKm, setRadiusKm] = useState("");
   const [keywordSearch, setKeywordSearch] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [savingSearch, setSavingSearch] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((current) =>
+      current.includes(category)
+        ? current.filter((item) => item !== category)
+        : [...current, category]
+    );
   };
 
   const addCompanyNames = async (items: Listing[]) => {
@@ -116,7 +131,8 @@ export default function ListingsPage() {
     regionFilter = selectedRegion,
     cityFilter = citySearch,
     radiusFilter = radiusKm,
-    keywordFilter = keywordSearch
+    keywordFilter = keywordSearch,
+    categoryFilter = selectedCategories
   ) => {
     setLoading(true);
 
@@ -159,6 +175,12 @@ export default function ListingsPage() {
           );
         }
 
+        if (categoryFilter.length > 0) {
+          filteredData = filteredData.filter((item) =>
+            categoryFilter.includes(item.category)
+          );
+        }
+
         filteredData = applyKeywordFilter(filteredData, keywordFilter);
 
         setListings(await addCompanyNames(filteredData));
@@ -185,6 +207,10 @@ export default function ListingsPage() {
       query = query.ilike("city", `%${cityFilter.trim()}%`);
     }
 
+    if (categoryFilter.length > 0) {
+      query = query.in("category", categoryFilter);
+    }
+
     const { data, error } = await query;
 
     if (!error && data) {
@@ -198,11 +224,17 @@ export default function ListingsPage() {
   };
 
   useEffect(() => {
-    loadListings("", "", "", "");
+    loadListings("", "", "", "", []);
   }, []);
 
   const applyFilters = () => {
-    loadListings(selectedRegion, citySearch, radiusKm, keywordSearch);
+    loadListings(
+      selectedRegion,
+      citySearch,
+      radiusKm,
+      keywordSearch,
+      selectedCategories
+    );
   };
 
   const clearFilters = () => {
@@ -210,7 +242,8 @@ export default function ListingsPage() {
     setCitySearch("");
     setRadiusKm("");
     setKeywordSearch("");
-    loadListings("", "", "", "");
+    setSelectedCategories([]);
+    loadListings("", "", "", "", []);
   };
 
   const saveCurrentSearch = async () => {
@@ -226,8 +259,12 @@ export default function ListingsPage() {
       return;
     }
 
+    const categoryName =
+      selectedCategories.length > 0 ? selectedCategories.join(", ") : "";
+
     const searchNameParts = [
       keywordSearch ? keywordSearch : "",
+      categoryName,
       citySearch ? citySearch : "",
       selectedRegion ? selectedRegion : "",
       radiusKm ? `${radiusKm} km` : "",
@@ -242,7 +279,7 @@ export default function ListingsPage() {
       {
         user_id: user.id,
         name: searchName,
-        category: "",
+        category: categoryName,
         city: citySearch || "",
         province: selectedRegion || "",
         radius_km: radiusKm ? Number(radiusKm) : null,
@@ -272,7 +309,7 @@ export default function ListingsPage() {
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
           <a href="/">
             <img
               src="/northstock-logo.png"
@@ -281,21 +318,21 @@ export default function ListingsPage() {
             />
           </a>
 
-          <div className="flex items-center gap-4">
-            <a href="/" className="text-sm font-semibold text-slate-700">
+          <div className="flex flex-wrap items-center gap-4">
+            <a href="/" className="text-sm font-bold text-slate-950">
               Home
             </a>
 
             <a
               href="/saved-searches"
-              className="text-sm font-semibold text-slate-700"
+              className="text-sm font-bold text-slate-950"
             >
               Saved Searches
             </a>
 
             <a
               href="/saved-listings"
-              className="text-sm font-semibold text-slate-700"
+              className="text-sm font-bold text-slate-950"
             >
               Saved Listings
             </a>
@@ -334,15 +371,19 @@ export default function ListingsPage() {
               </p>
 
               <div className="space-y-2 text-sm text-slate-700">
-                <label className="block">
-                  <input type="checkbox" /> Office Furniture
-                </label>
-                <label className="block">
-                  <input type="checkbox" /> Restaurant Equipment
-                </label>
-                <label className="block">
-                  <input type="checkbox" /> Contractor Tools
-                </label>
+                {categories.map((category) => (
+                  <label
+                    key={category}
+                    className="flex items-center gap-2 text-slate-800"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(category)}
+                      onChange={() => toggleCategory(category)}
+                    />
+                    {category}
+                  </label>
+                ))}
               </div>
             </div>
 
@@ -425,12 +466,14 @@ export default function ListingsPage() {
         </aside>
 
         <section>
-          <div className="mb-6 flex items-end justify-between">
+          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <h1 className="text-3xl font-bold">Inventory</h1>
               <p className="mt-1 text-slate-700">
                 {keywordSearch
                   ? `Showing results for "${keywordSearch}"`
+                  : selectedCategories.length > 0
+                  ? `Showing ${selectedCategories.join(", ")} listings`
                   : citySearch && radiusKm
                   ? `Showing listings within ${radiusKm} km of ${citySearch}`
                   : selectedRegion
