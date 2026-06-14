@@ -19,16 +19,36 @@ export async function POST(request: Request) {
 
     const { sellerEmail, buyerEmail, listingTitle, listingId } = body;
 
+    const recipients = [
+      sellerEmail,
+      "info@northstock.ca",
+    ].filter(Boolean);
+
     const data = await resend.emails.send({
       from: "NorthStock <onboarding@resend.dev>",
-      to: [sellerEmail || "brendandforster@gmail.com"],
+      to: recipients,
       subject: `New Quote Request: ${listingTitle || "NorthStock Listing"}`,
       html: `
         <h2>New Quote Request</h2>
+
+        <p>You received a new quote request on NorthStock.</p>
+
         <p><strong>Listing:</strong> ${listingTitle || "Unknown listing"}</p>
         <p><strong>Buyer Email:</strong> ${buyerEmail || "Unknown buyer"}</p>
-        <p><a href="https://northstock.ca/listings/${listingId || ""}">View Listing</a></p>
-        <p><a href="https://northstock.ca/seller/leads">View Quote Requests</a></p>
+
+        <p>
+          <a href="https://northstock.ca/listings/${listingId || ""}">
+            View Listing
+          </a>
+        </p>
+
+        <p>
+          <a href="https://northstock.ca/seller/leads">
+            View Quote Requests
+          </a>
+        </p>
+
+        <p>NorthStock</p>
       `,
     });
 
