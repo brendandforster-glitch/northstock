@@ -127,7 +127,7 @@ export default function Home() {
               <>
                 <a
                   href="/login"
-                  className="text-sm font-semibold text-black"
+                  className="text-sm font-semibold text-slate-950"
                 >
                   Log In
                 </a>
@@ -215,7 +215,7 @@ export default function Home() {
 
                 <a
                   href="/listings"
-                  className="text-sm font-semibold text-slate-700"
+                  className="text-sm font-bold text-slate-950"
                 >
                   View all
                 </a>

@@ -13,9 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "NorthStock | Commercial Inventory Marketplace",
-  description:
-    "Buy and sell business inventory across North America.",
+  title: "NorthStock",
+  description: "North America's Commercial Inventory Marketplace",
 };
 
 export default function RootLayout({
