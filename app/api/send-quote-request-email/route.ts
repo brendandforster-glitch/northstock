@@ -4,7 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function GET() {
   const data = await resend.emails.send({
-    from: "NorthStock <onboarding@resend.dev>",
+    from: "NorthStock <info@northstock.ca>",
     to: ["brendandforster@gmail.com"],
     subject: "NorthStock Quote Route Test",
     html: "<p>The quote email route is working.</p>",
@@ -14,36 +14,17 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  console.log("QUOTE EMAIL ROUTE HIT");
-
   try {
     const body = await request.json();
 
-    console.log("REQUEST BODY:", body);
+    const { sellerEmail, buyerEmail, listingTitle, listingId } = body;
 
-    const {
-      sellerEmail,
-      buyerEmail,
-      listingTitle,
-      listingId,
-    } = body;
-
-    console.log("SELLER EMAIL:", sellerEmail);
-
-    const recipients = [
-  sellerEmail,
-  "info@northstock.ca",
-  "brendandforster@gmail.com",
-].filter(Boolean);
-
-    console.log("RECIPIENTS:", recipients);
+    const recipients = [sellerEmail, "info@northstock.ca"].filter(Boolean);
 
     const data = await resend.emails.send({
       from: "NorthStock <info@northstock.ca>",
       to: recipients,
-      subject: `New Quote Request: ${
-        listingTitle || "NorthStock Listing"
-      }`,
+      subject: `New Quote Request: ${listingTitle || "NorthStock Listing"}`,
       html: `
         <h2>New Quote Request</h2>
 
@@ -75,15 +56,11 @@ export async function POST(request: Request) {
       `,
     });
 
-    console.log("RESEND RESPONSE:", data);
-
     return Response.json({
       data,
       error: null,
     });
   } catch (error) {
-    console.error("EMAIL ROUTE ERROR:", error);
-
     return Response.json(
       {
         data: null,
