@@ -22,40 +22,64 @@ function formatDate(dateString: string | null) {
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+
   const [listingCount, setListingCount] = useState(0);
   const [companyCount, setCompanyCount] = useState(0);
   const [leadCount, setLeadCount] = useState(0);
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
 
   useEffect(() => {
-    async function loadAdminData() {
-      const { count: listings } = await supabase
-        .from("listings")
-        .select("*", { count: "exact", head: true });
-
-      const { count: companies } = await supabase
-        .from("companies")
-        .select("*", { count: "exact", head: true });
-
-      const { count: leads } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true });
-
-      const { data: leadsData } = await supabase
-        .from("leads")
-        .select("id, listing_id, buyer_email, created_at")
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      setListingCount(listings || 0);
-      setCompanyCount(companies || 0);
-      setLeadCount(leads || 0);
-      setRecentLeads(leadsData || []);
-      setLoading(false);
-    }
-
     loadAdminData();
   }, []);
+
+  async function loadAdminData() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const allowedAdmins = [
+  "brendandforster@gmail.com",
+  "info@northstock.ca",
+];
+
+if (!allowedAdmins.includes(user.email || "")) {
+  setAuthorized(false);
+  setLoading(false);
+  return;
+}
+
+    setAuthorized(true);
+
+    const { count: listings } = await supabase
+      .from("listings")
+      .select("*", { count: "exact", head: true });
+
+    const { count: companies } = await supabase
+      .from("companies")
+      .select("*", { count: "exact", head: true });
+
+    const { count: leads } = await supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true });
+
+    const { data: leadsData } = await supabase
+      .from("leads")
+      .select("id, listing_id, buyer_email, created_at")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    setListingCount(listings || 0);
+    setCompanyCount(companies || 0);
+    setLeadCount(leads || 0);
+    setRecentLeads(leadsData || []);
+    setLoading(false);
+  }
 
   if (loading) {
     return (
@@ -65,11 +89,42 @@ export default function AdminPage() {
     );
   }
 
+  if (!authorized) {
+    return (
+      <main className="min-h-screen bg-[#f7f8fa] p-10">
+        <h1 className="text-3xl font-bold text-slate-950">Access denied</h1>
+        <p className="mt-2 text-slate-700">
+          You do not have permission to view this page.
+        </p>
+
+        <a
+          href="/"
+          className="mt-5 inline-block rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white"
+        >
+          Return Home
+        </a>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <section className="mx-auto max-w-7xl px-6 py-10">
-        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-        <p className="mt-2 text-slate-700">NorthStock marketplace overview.</p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+            <p className="mt-2 text-slate-700">
+              NorthStock marketplace overview.
+            </p>
+          </div>
+
+          <a
+            href="/"
+            className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-950"
+          >
+            Back to Home
+          </a>
+        </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
