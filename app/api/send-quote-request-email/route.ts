@@ -30,12 +30,16 @@ export async function POST(request: Request) {
 
     console.log("SELLER EMAIL:", sellerEmail);
 
-    const recipients = ["brendandforster@gmail.com"];
+    const recipients = [
+  sellerEmail,
+  "info@northstock.ca",
+  "brendandforster@gmail.com",
+].filter(Boolean);
 
     console.log("RECIPIENTS:", recipients);
 
     const data = await resend.emails.send({
-      from: "NorthStock <onboarding@resend.dev>",
+      from: "NorthStock <info@northstock.ca>",
       to: recipients,
       subject: `New Quote Request: ${
         listingTitle || "NorthStock Listing"
