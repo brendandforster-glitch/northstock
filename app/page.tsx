@@ -10,6 +10,7 @@ type FeaturedListing = {
   city: string;
   province: string | null;
   price: number | null;
+  price_note: string | null;
   image_url: string | null;
 };
 
@@ -28,7 +29,9 @@ const categories = [
   },
 ];
 
-function formatPrice(price: number | null) {
+function formatPrice(price: number | null, priceNote?: string | null) {
+  if (priceNote) return priceNote;
+
   if (price === null || price === undefined) return "Contact for pricing";
 
   return new Intl.NumberFormat("en-US", {
@@ -46,6 +49,11 @@ export default function Home() {
   const [listingCount, setListingCount] = useState(0);
   const [sellerCount, setSellerCount] = useState(0);
 
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [sendingContact, setSendingContact] = useState(false);
+
   useEffect(() => {
     async function loadHomeData() {
       const {
@@ -56,13 +64,13 @@ export default function Home() {
 
       const { data: listings } = await supabase
         .from("listings")
-        .select("id, title, category, city, province, price, image_url")
+        .select("id, title, category, city, province, price, price_note, image_url")
         .eq("status", "active")
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
         .limit(6);
 
-      setFeaturedListings(listings || []);
+      setFeaturedListings((listings || []) as FeaturedListing[]);
 
       const { count: activeListingCount } = await supabase
         .from("listings")
@@ -87,10 +95,46 @@ export default function Home() {
     window.location.href = "/";
   };
 
+  async function sendContactMessage(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!contactName || !contactEmail || !contactMessage) {
+      alert("Please complete name, email, and message.");
+      return;
+    }
+
+    setSendingContact(true);
+
+    const response = await fetch("/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: contactName,
+        email: contactEmail,
+        message: contactMessage,
+      }),
+    });
+
+    setSendingContact(false);
+
+    if (!response.ok) {
+      alert("Message failed to send. Please email info@northstock.ca directly.");
+      return;
+    }
+
+    alert("Message sent successfully.");
+
+    setContactName("");
+    setContactEmail("");
+    setContactMessage("");
+  }
+
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
           <a href="/">
             <img
               src="/northstock-logo.png"
@@ -99,7 +143,7 @@ export default function Home() {
             />
           </a>
 
-          <nav className="hidden gap-8 text-sm font-medium text-slate-600 md:flex">
+          <nav className="hidden gap-8 text-sm font-bold text-slate-950 md:flex">
             <a href="/listings">Browse Inventory</a>
             <a href="/list-inventory">List Inventory</a>
             <a href="/seller">Seller Dashboard</a>
@@ -109,10 +153,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             {loggedIn ? (
               <>
-                <a
-                  href="/seller"
-                  className="text-sm font-semibold text-black"
-                >
+                <a href="/seller" className="text-sm font-semibold text-black">
                   Seller Dashboard
                 </a>
 
@@ -125,10 +166,7 @@ export default function Home() {
               </>
             ) : (
               <>
-                <a
-                  href="/login"
-                  className="text-sm font-semibold text-black"
-                >
+                <a href="/login" className="text-sm font-semibold text-black">
                   Log In
                 </a>
 
@@ -213,10 +251,7 @@ export default function Home() {
                   Recently listed inventory
                 </p>
 
-                <a
-                  href="/listings"
-                  className="text-sm font-bold text-slate-950"
-                >
+                <a href="/listings" className="text-sm font-bold text-slate-950">
                   View all
                 </a>
               </div>
@@ -235,7 +270,7 @@ export default function Home() {
                           {item.province ? `, ${item.province}` : ""}
                         </p>
                         <p className="mt-1 text-sm font-semibold text-slate-700">
-                          {formatPrice(item.price)}
+                          {formatPrice(item.price, item.price_note)}
                         </p>
                       </div>
 
@@ -366,10 +401,7 @@ export default function Home() {
         <div className="mb-8 flex items-end justify-between">
           <h2 className="text-3xl font-bold">Featured Inventory</h2>
 
-          <a
-            className="text-sm font-semibold text-slate-700"
-            href="/listings"
-          >
+          <a className="text-sm font-semibold text-slate-700" href="/listings">
             View all
           </a>
         </div>
@@ -387,7 +419,7 @@ export default function Home() {
                     <img
                       src={item.image_url}
                       alt={item.title}
-                      className="h-full w-full rounded-2xl object-cover"
+                      className="h-full w-full rounded-2xl object-contain p-2"
                     />
                   ) : (
                     "Image"
@@ -401,7 +433,7 @@ export default function Home() {
                 <h3 className="mt-1 text-xl font-bold">{item.title}</h3>
 
                 <p className="mt-2 font-semibold text-slate-950">
-                  {formatPrice(item.price)}
+                  {formatPrice(item.price, item.price_note)}
                 </p>
 
                 <p className="mt-2 text-sm text-slate-600">
@@ -422,10 +454,7 @@ export default function Home() {
         <div className="mb-8 flex items-end justify-between">
           <h2 className="text-3xl font-bold">Browse by category</h2>
 
-          <a
-            className="text-sm font-semibold text-slate-700"
-            href="/listings"
-          >
+          <a className="text-sm font-semibold text-slate-700" href="/listings">
             View all
           </a>
         </div>
@@ -545,16 +574,40 @@ export default function Home() {
             </div>
 
             <div>
-              <h3 className="font-bold">Categories</h3>
+              <h3 className="font-bold">Send a Message</h3>
 
-              <p className="mt-3 text-sm text-slate-600">
-                Office Furniture · Restaurant Equipment · Contractor Tools
-              </p>
+              <form onSubmit={sendContactMessage} className="mt-3 space-y-3">
+                <input
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  placeholder="Name"
+                  className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950 placeholder:text-slate-500"
+                />
 
-              <p className="mt-5 text-sm text-slate-600">
-                Looking to sell inventory? Create a free account and start
-                listing today.
-              </p>
+                <input
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="Email"
+                  type="email"
+                  className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950 placeholder:text-slate-500"
+                />
+
+                <textarea
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  placeholder="Message"
+                  rows={4}
+                  className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950 placeholder:text-slate-500"
+                />
+
+                <button
+                  type="submit"
+                  disabled={sendingContact}
+                  className="w-full rounded-xl bg-slate-950 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {sendingContact ? "Sending..." : "Send Message"}
+                </button>
+              </form>
             </div>
           </div>
 
