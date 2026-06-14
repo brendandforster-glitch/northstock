@@ -24,8 +24,8 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f8fa] flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-3xl border bg-white p-8 shadow-sm">
+    <main className="min-h-screen bg-[#f7f8fa] flex items-center justify-center px-6 py-10">
+      <div className="w-full max-w-md rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
         <a href="/">
           <img
             src="/northstock-logo.png"
@@ -41,8 +41,8 @@ export default function LoginPage() {
 
         <div className="mt-8 space-y-4">
           <input
-            value={email}
-            className="w-full rounded-xl border p-4"
+  value={email}
+  className="w-full rounded-xl border border-slate-300 p-4 text-base text-slate-950"
             placeholder="Email"
             type="email"
             onChange={(e) => setEmail(e.target.value)}
@@ -50,7 +50,7 @@ export default function LoginPage() {
 
           <input
             value={password}
-            className="w-full rounded-xl border p-4"
+            className="w-full rounded-xl border border-slate-300 p-4 text-base text-slate-950"
             placeholder="Password"
             type="password"
             onChange={(e) => setPassword(e.target.value)}
@@ -73,7 +73,7 @@ export default function LoginPage() {
           <div className="text-center">
             <a
               href="/forgot-password"
-              className="text-sm font-semibold text-black"
+              className="text-base font-semibold text-blue-600"
             >
               Forgot your password?
             </a>
