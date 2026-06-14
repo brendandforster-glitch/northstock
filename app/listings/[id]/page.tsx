@@ -125,38 +125,6 @@ export default function ListingDetailsPage({
     loadListing();
   }, [id]);
 
-  const requestQuote = async () => {
-    if (!listing) return;
-
-    setSubmitting(true);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user?.email) {
-      setSubmitting(false);
-      window.location.href = "/login";
-      return;
-    }
-
-    const { error } = await supabase.from("leads").insert([
-      {
-        listing_id: listing.id,
-        buyer_email: user.email,
-      },
-    ]);
-
-    setSubmitting(false);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    alert("Quote request sent successfully!");
-  };
-
   const saveListing = async () => {
     if (!listing) return;
 
@@ -182,7 +150,7 @@ export default function ListingDetailsPage({
     setSavingListing(false);
 
     if (error) {
-      if (error.message.includes("duplicate")) {
+      if (error.message.toLowerCase().includes("duplicate")) {
         setIsSaved(true);
         alert("This listing is already saved.");
         return;
@@ -194,6 +162,76 @@ export default function ListingDetailsPage({
 
     setIsSaved(true);
     alert("Listing saved.");
+  };
+
+  const requestQuote = async () => {
+    if (!listing) return;
+
+    setSubmitting(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user?.email) {
+      setSubmitting(false);
+      window.location.href = "/login";
+      return;
+    }
+
+    const { data: leadData, error: leadError } = await supabase
+      .from("leads")
+      .insert([
+        {
+          listing_id: listing.id,
+          buyer_email: user.email,
+        },
+      ])
+      .select()
+      .single();
+
+    if (leadError) {
+      setSubmitting(false);
+      alert(`Lead insert failed: ${leadError.message}`);
+      return;
+    }
+
+    console.log("Lead inserted:", leadData);
+
+    let emailMessage = "Email was not sent.";
+
+    try {
+      const emailResponse = await fetch("/api/send-quote-request-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sellerEmail: company?.email || "brendandforster@gmail.com",
+          buyerEmail: user.email,
+          listingTitle: listing.title,
+          listingId: listing.id,
+        }),
+      });
+
+      const emailResult = await emailResponse.json();
+
+      console.log("Email response status:", emailResponse.status);
+      console.log("Email result:", emailResult);
+
+      if (!emailResponse.ok || emailResult.error) {
+        emailMessage = `Email failed: ${JSON.stringify(emailResult.error)}`;
+      } else {
+        emailMessage = "Email notification sent.";
+      }
+    } catch (err) {
+      console.error("Email error:", err);
+      emailMessage = "Email failed due to a network or route error.";
+    }
+
+    setSubmitting(false);
+
+    alert(`Quote request saved. ${emailMessage}`);
   };
 
   if (loading) {
