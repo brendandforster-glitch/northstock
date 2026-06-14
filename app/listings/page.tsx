@@ -66,6 +66,7 @@ export default function ListingsPage() {
   const [selectedRegion, setSelectedRegion] = useState("");
   const [citySearch, setCitySearch] = useState("");
   const [radiusKm, setRadiusKm] = useState("");
+  const [keywordSearch, setKeywordSearch] = useState("");
   const [savingSearch, setSavingSearch] = useState(false);
 
   const handleLogout = async () => {
@@ -92,10 +93,30 @@ export default function ListingsPage() {
     return listingsWithCompanies;
   };
 
+  const applyKeywordFilter = (items: Listing[], keyword: string) => {
+    const search = keyword.toLowerCase().trim();
+
+    if (!search) return items;
+
+    return items.filter((item) =>
+      [
+        item.title,
+        item.description,
+        item.brand,
+        item.model,
+        item.sku,
+        item.category,
+      ]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(search))
+    );
+  };
+
   const loadListings = async (
     regionFilter = selectedRegion,
     cityFilter = citySearch,
-    radiusFilter = radiusKm
+    radiusFilter = radiusKm,
+    keywordFilter = keywordSearch
   ) => {
     setLoading(true);
 
@@ -138,6 +159,8 @@ export default function ListingsPage() {
           );
         }
 
+        filteredData = applyKeywordFilter(filteredData, keywordFilter);
+
         setListings(await addCompanyNames(filteredData));
       } else {
         setListings([]);
@@ -165,7 +188,8 @@ export default function ListingsPage() {
     const { data, error } = await query;
 
     if (!error && data) {
-      setListings(await addCompanyNames(data as Listing[]));
+      const filteredData = applyKeywordFilter(data as Listing[], keywordFilter);
+      setListings(await addCompanyNames(filteredData));
     } else {
       setListings([]);
     }
@@ -174,18 +198,19 @@ export default function ListingsPage() {
   };
 
   useEffect(() => {
-    loadListings("", "", "");
+    loadListings("", "", "", "");
   }, []);
 
   const applyFilters = () => {
-    loadListings(selectedRegion, citySearch, radiusKm);
+    loadListings(selectedRegion, citySearch, radiusKm, keywordSearch);
   };
 
   const clearFilters = () => {
     setSelectedRegion("");
     setCitySearch("");
     setRadiusKm("");
-    loadListings("", "", "");
+    setKeywordSearch("");
+    loadListings("", "", "", "");
   };
 
   const saveCurrentSearch = async () => {
@@ -202,6 +227,7 @@ export default function ListingsPage() {
     }
 
     const searchNameParts = [
+      keywordSearch ? keywordSearch : "",
       citySearch ? citySearch : "",
       selectedRegion ? selectedRegion : "",
       radiusKm ? `${radiusKm} km` : "",
@@ -220,7 +246,7 @@ export default function ListingsPage() {
         city: citySearch || "",
         province: selectedRegion || "",
         radius_km: radiusKm ? Number(radiusKm) : null,
-        keyword: "",
+        keyword: keywordSearch || "",
         email_alerts_enabled: true,
       },
     ]);
@@ -289,6 +315,19 @@ export default function ListingsPage() {
           <h2 className="text-lg font-bold">Filters</h2>
 
           <div className="mt-6 space-y-6">
+            <div>
+              <p className="mb-3 text-sm font-semibold text-slate-800">
+                Keyword / Item Search
+              </p>
+
+              <input
+                value={keywordSearch}
+                onChange={(e) => setKeywordSearch(e.target.value)}
+                placeholder="Search item, brand, model, SKU..."
+                className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950 placeholder:text-slate-500"
+              />
+            </div>
+
             <div>
               <p className="mb-3 text-sm font-semibold text-slate-800">
                 Category
@@ -390,7 +429,9 @@ export default function ListingsPage() {
             <div>
               <h1 className="text-3xl font-bold">Inventory</h1>
               <p className="mt-1 text-slate-700">
-                {citySearch && radiusKm
+                {keywordSearch
+                  ? `Showing results for "${keywordSearch}"`
+                  : citySearch && radiusKm
                   ? `Showing listings within ${radiusKm} km of ${citySearch}`
                   : selectedRegion
                   ? `Showing active listings in ${selectedRegion}`
