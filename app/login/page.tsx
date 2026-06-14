@@ -35,7 +35,7 @@ export default function LoginPage() {
         </a>
 
         <h1 className="mt-8 text-3xl font-bold">Log in to NorthStock</h1>
-        <p className="mt-2 text-slate-950">
+        <p className="mt-2 text-black">
           Create an account or log in to browse inventory.
         </p>
 
@@ -73,7 +73,7 @@ export default function LoginPage() {
           <div className="text-center">
             <a
               href="/forgot-password"
-              className="text-sm font-semibold text-slate-750 hover:text-slate-950"
+              className="text-sm font-semibold text-black"
             >
               Forgot your password?
             </a>

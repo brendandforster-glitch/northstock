@@ -111,7 +111,7 @@ export default function Home() {
               <>
                 <a
                   href="/seller"
-                  className="text-sm font-semibold text-slate-950"
+                  className="text-sm font-semibold text-black"
                 >
                   Seller Dashboard
                 </a>
@@ -127,7 +127,7 @@ export default function Home() {
               <>
                 <a
                   href="/login"
-                  className="text-sm font-semibold text-slate-950"
+                  className="text-sm font-semibold text-black"
                 >
                   Log In
                 </a>
