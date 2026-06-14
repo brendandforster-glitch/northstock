@@ -64,11 +64,11 @@ export default function LoginPage() {
           </button>
 
           <button
-            onClick={signUp}
-            className="w-full rounded-xl border py-4 font-semibold"
-          >
-            Create Account
-          </button>
+  onClick={signUp}
+  className="w-full rounded-xl bg-slate-950 py-4 font-semibold text-white hover:bg-slate-800"
+>
+  Create Account
+</button>
 
           <div className="text-center">
             <a
