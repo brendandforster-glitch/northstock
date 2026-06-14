@@ -12,9 +12,42 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: "NorthStock",
-  description: "North America's Commercial Inventory Marketplace",
+export const metadata: Metadata = {
+  title: {
+    default: "NorthStock",
+    template: "%s | NorthStock",
+  },
+
+  description:
+    "NorthStock is North America's commercial inventory marketplace. Buy and sell office furniture, restaurant equipment, contractor tools, and surplus business inventory.",
+
+  keywords: [
+    "commercial inventory",
+    "business inventory",
+    "surplus inventory",
+    "office furniture",
+    "restaurant equipment",
+    "contractor tools",
+    "used equipment",
+    "industrial inventory",
+    "NorthStock",
+  ],
+
+  metadataBase: new URL("https://northstock.ca"),
+
+  openGraph: {
+    title: "NorthStock",
+    description: "North America's Commercial Inventory Marketplace",
+    url: "https://northstock.ca",
+    siteName: "NorthStock",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "NorthStock",
+    description: "North America's Commercial Inventory Marketplace",
+  },
 };
 
 export default function RootLayout({

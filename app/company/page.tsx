@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 export default function CompanyPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const [companyId, setCompanyId] = useState<string | null>(null);
 
@@ -51,6 +52,43 @@ export default function CompanyPage() {
     }
 
     setLoading(false);
+  }
+
+  async function uploadLogo(file: File) {
+    setUploadingLogo(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setUploadingLogo(false);
+      window.location.href = "/login";
+      return;
+    }
+
+    const fileExt = file.name.split(".").pop();
+    const filePath = `company-logos/${user.id}-${Date.now()}.${fileExt}`;
+
+    const { error } = await supabase.storage
+      .from("northstock-images")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) {
+      setUploadingLogo(false);
+      alert(error.message);
+      return;
+    }
+
+    const { data } = supabase.storage
+      .from("northstock-images")
+      .getPublicUrl(filePath);
+
+    setLogoUrl(data.publicUrl);
+    setUploadingLogo(false);
   }
 
   async function saveCompany() {
@@ -122,7 +160,7 @@ export default function CompanyPage() {
   return (
     <main className="min-h-screen bg-[#f7f8fa]">
       <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
           <a href="/">
             <img
               src="/northstock-logo.png"
@@ -131,7 +169,7 @@ export default function CompanyPage() {
             />
           </a>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <a href="/seller" className="text-sm font-bold text-slate-950">
               Seller Dashboard
             </a>
@@ -209,21 +247,42 @@ export default function CompanyPage() {
                 />
               </div>
 
-              <input
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="Logo Image URL"
-                className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
-              />
+              <div className="rounded-2xl border border-slate-300 bg-slate-50 p-5">
+                <label className="block text-sm font-bold text-slate-950">
+                  Company Logo
+                </label>
 
-              <p className="text-sm text-slate-600">
-                Tip: Use a direct image URL ending in .jpg, .png, .webp, or an
-                image hosted online.
-              </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Upload a logo image or paste an image URL below.
+                </p>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadLogo(file);
+                  }}
+                  className="mt-4 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-950"
+                />
+
+                {uploadingLogo && (
+                  <p className="mt-3 text-sm font-semibold text-slate-700">
+                    Uploading logo...
+                  </p>
+                )}
+
+                <input
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  placeholder="Logo Image URL"
+                  className="mt-4 w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+                />
+              </div>
 
               <button
                 onClick={saveCompany}
-                disabled={saving}
+                disabled={saving || uploadingLogo}
                 className="rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Company Profile"}
@@ -241,7 +300,7 @@ export default function CompanyPage() {
                 <img
                   src={logoUrl}
                   alt={companyName || "Company logo"}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain p-2"
                 />
               ) : (
                 "Logo"

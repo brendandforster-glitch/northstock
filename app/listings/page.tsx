@@ -499,7 +499,7 @@ export default function ListingsPage() {
                       <img
                         src={item.image_url}
                         alt={item.title}
-                        className="h-full w-full rounded-2xl object-cover"
+                        className="h-full w-full rounded-2xl object-contain p-2"
                       />
                     ) : (
                       "Image"

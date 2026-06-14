@@ -16,13 +16,16 @@ type Listing = {
   status: string | null;
   expires_at: string | null;
   price: number | null;
+  price_note: string | null;
   condition: string | null;
   brand: string | null;
   model: string | null;
   sku: string | null;
 };
 
-function formatPrice(price: number | null) {
+function formatPrice(price: number | null, priceNote?: string | null) {
+  if (priceNote) return priceNote;
+
   if (price === null || price === undefined) return "Contact for pricing";
 
   return new Intl.NumberFormat("en-US", {
@@ -83,7 +86,7 @@ export default function ListingDetailsPage({
         return;
       }
 
-      setListing(data);
+      setListing(data as Listing);
 
       const { data: savedData } = await supabase
         .from("saved_listings")
@@ -179,24 +182,20 @@ export default function ListingDetailsPage({
       return;
     }
 
-    const { data: leadData, error: leadError } = await supabase
+    const { error: leadError } = await supabase
       .from("leads")
       .insert([
         {
           listing_id: listing.id,
           buyer_email: user.email,
         },
-      ])
-      .select()
-      .single();
+      ]);
 
     if (leadError) {
       setSubmitting(false);
       alert(`Lead insert failed: ${leadError.message}`);
       return;
     }
-
-    console.log("Lead inserted:", leadData);
 
     let emailMessage = "Email was not sent.";
 
@@ -207,7 +206,7 @@ export default function ListingDetailsPage({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          sellerEmail: company?.email || "brendandforster@gmail.com",
+          sellerEmail: company?.email || "info@northstock.ca",
           buyerEmail: user.email,
           listingTitle: listing.title,
           listingId: listing.id,
@@ -216,16 +215,12 @@ export default function ListingDetailsPage({
 
       const emailResult = await emailResponse.json();
 
-      console.log("Email response status:", emailResponse.status);
-      console.log("Email result:", emailResult);
-
       if (!emailResponse.ok || emailResult.error) {
         emailMessage = `Email failed: ${JSON.stringify(emailResult.error)}`;
       } else {
         emailMessage = "Email notification sent.";
       }
-    } catch (err) {
-      console.error("Email error:", err);
+    } catch {
       emailMessage = "Email failed due to a network or route error.";
     }
 
@@ -277,10 +272,10 @@ export default function ListingDetailsPage({
             <div className="flex h-[450px] items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
               {listing.image_url ? (
                 <img
-                  src={listing.image_url}
-                  alt={listing.title}
-                  className="h-full w-full rounded-2xl object-cover"
-                />
+  src={listing.image_url}
+  alt={listing.title}
+  className="h-full w-full rounded-2xl object-contain p-2"
+/>
               ) : (
                 "Listing Image"
               )}
@@ -297,7 +292,7 @@ export default function ListingDetailsPage({
             </h1>
 
             <p className="mt-4 text-3xl font-bold text-slate-950">
-              {formatPrice(listing.price)}
+              {formatPrice(listing.price, listing.price_note)}
             </p>
 
             <p className="mt-4 text-slate-700">
@@ -418,7 +413,7 @@ export default function ListingDetailsPage({
                       </p>
 
                       <p className="mt-2 font-semibold text-slate-950">
-                        {formatPrice(item.price)}
+                        {formatPrice(item.price, item.price_note)}
                       </p>
                     </a>
                   ))}

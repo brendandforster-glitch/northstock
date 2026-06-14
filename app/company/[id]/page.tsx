@@ -23,7 +23,20 @@ type Listing = {
   city: string;
   province: string | null;
   price: number | null;
+  price_note: string | null;
 };
+
+function formatPrice(price: number | null, priceNote?: string | null) {
+  if (priceNote) return priceNote;
+
+  if (price === null || price === undefined) return "Contact for pricing";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(price);
+}
 
 export default function CompanyProfilePage({
   params,
@@ -52,56 +65,48 @@ export default function CompanyProfilePage({
       return;
     }
 
-    setCompany(companyData);
+    setCompany(companyData as Company);
 
     const { data: listingData } = await supabase
       .from("listings")
       .select("*")
       .eq("user_id", companyData.user_id)
-      .eq("status", "active");
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString());
 
-    setListings(listingData || []);
+    setListings((listingData || []) as Listing[]);
 
     setLoading(false);
   }
 
   if (loading) {
-    return (
-      <main className="min-h-screen p-10">
-        Loading company...
-      </main>
-    );
+    return <main className="min-h-screen p-10">Loading company...</main>;
   }
 
   if (!company) {
-    return (
-      <main className="min-h-screen p-10">
-        Company not found.
-      </main>
-    );
+    return <main className="min-h-screen p-10">Company not found.</main>;
   }
 
   return (
     <main className="min-h-screen bg-[#f7f8fa]">
       <div className="mx-auto max-w-6xl px-6 py-10">
-        <div className="rounded-3xl border bg-white p-8 shadow-sm">
-
+        <div className="rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
           {company.logo_url && (
-            <img
-              src={company.logo_url}
-              alt={company.company_name}
-              className="mb-6 h-24 w-24 rounded-xl object-cover"
-            />
+            <div className="mb-6 flex h-28 w-28 items-center justify-center overflow-hidden rounded-xl border border-slate-300 bg-slate-50">
+              <img
+                src={company.logo_url}
+                alt={company.company_name}
+                className="h-full w-full object-contain p-2"
+              />
+            </div>
           )}
 
-          <h1 className="text-4xl font-bold">
+          <h1 className="text-4xl font-bold text-slate-950">
             {company.company_name}
           </h1>
 
           {company.description && (
-            <p className="mt-4 text-slate-600">
-              {company.description}
-            </p>
+            <p className="mt-4 text-slate-700">{company.description}</p>
           )}
 
           <div className="mt-6 grid gap-3 text-sm text-slate-700">
@@ -118,37 +123,39 @@ export default function CompanyProfilePage({
         </div>
 
         <div className="mt-10">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-2xl font-bold text-slate-950">
             Active Listings
           </h2>
 
           <div className="mt-6 space-y-4">
-            {listings.map((item) => (
-              <a
-                key={item.id}
-                href={`/listings/${item.id}`}
-                className="block rounded-2xl border bg-white p-5 shadow-sm"
-              >
-                <p className="text-sm text-slate-500">
-                  {item.category}
-                </p>
+            {listings.length > 0 ? (
+              listings.map((item) => (
+                <a
+                  key={item.id}
+                  href={`/listings/${item.id}`}
+                  className="block rounded-2xl border border-slate-300 bg-white p-5 shadow-sm hover:border-slate-500"
+                >
+                  <p className="text-sm text-slate-500">{item.category}</p>
 
-                <h3 className="mt-1 text-xl font-bold">
-                  {item.title}
-                </h3>
+                  <h3 className="mt-1 text-xl font-bold text-slate-950">
+                    {item.title}
+                  </h3>
 
-                <p className="mt-2 text-slate-600">
-                  {item.city}
-                  {item.province ? `, ${item.province}` : ""}
-                </p>
+                  <p className="mt-2 text-slate-600">
+                    {item.city}
+                    {item.province ? `, ${item.province}` : ""}
+                  </p>
 
-                <p className="mt-2 font-semibold">
-                  {item.price
-                    ? `$${item.price}`
-                    : "Contact for pricing"}
-                </p>
-              </a>
-            ))}
+                  <p className="mt-2 font-semibold text-slate-950">
+                    {formatPrice(item.price, item.price_note)}
+                  </p>
+                </a>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-slate-300 bg-white p-6 text-slate-700">
+                No active listings available from this seller.
+              </div>
+            )}
           </div>
         </div>
       </div>

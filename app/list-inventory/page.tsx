@@ -40,6 +40,7 @@ export default function ListInventoryPage() {
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
   const [price, setPrice] = useState("");
+  const [priceNote, setPriceNote] = useState("");
   const [condition, setCondition] = useState("");
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
@@ -47,6 +48,7 @@ export default function ListInventoryPage() {
   const [imageUrl, setImageUrl] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [submittingListing, setSubmittingListing] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [excelRows, setExcelRows] = useState<any[]>([]);
   const [uploadingExcel, setUploadingExcel] = useState(false);
@@ -93,6 +95,43 @@ export default function ListInventoryPage() {
     };
   };
 
+  const uploadListingImage = async (file: File) => {
+    setUploadingImage(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setUploadingImage(false);
+      window.location.href = "/login";
+      return;
+    }
+
+    const fileExt = file.name.split(".").pop();
+    const filePath = `listing-images/${user.id}-${Date.now()}.${fileExt}`;
+
+    const { error } = await supabase.storage
+      .from("northstock-images")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) {
+      setUploadingImage(false);
+      alert(error.message);
+      return;
+    }
+
+    const { data } = supabase.storage
+      .from("northstock-images")
+      .getPublicUrl(filePath);
+
+    setImageUrl(data.publicUrl);
+    setUploadingImage(false);
+  };
+
   const formatExcelRows = async (rows: any[], userId: string) => {
     const formattedRows = await Promise.all(
       rows.map(async (row: any) => {
@@ -105,6 +144,13 @@ export default function ListInventoryPage() {
 
         const coordinates = await getCoordinates(rowCity, rowProvince);
 
+        const rawPriceNote =
+          row.price_note ||
+          row.Price_Note ||
+          row.priceNote ||
+          row.PriceNote ||
+          "";
+
         return {
           user_id: userId,
           title: row.title || row.Title || "",
@@ -116,6 +162,7 @@ export default function ListInventoryPage() {
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
           price: row.price || row.Price ? Number(row.price || row.Price) : null,
+          price_note: rawPriceNote || null,
           condition: row.condition || row.Condition || "",
           brand: row.brand || row.Brand || "",
           model: row.model || row.Model || "",
@@ -147,6 +194,7 @@ export default function ListInventoryPage() {
         city: "Vancouver",
         province: "British Columbia",
         price: 100,
+        price_note: "$100 each or bulk pricing available",
         condition: "Used",
         brand: "Herman Miller",
         model: "Aeron",
@@ -237,6 +285,7 @@ export default function ListInventoryPage() {
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
         price: price ? Number(price) : null,
+        price_note: priceNote || null,
         condition,
         brand,
         model,
@@ -271,6 +320,7 @@ export default function ListInventoryPage() {
     setCity("");
     setProvince("");
     setPrice("");
+    setPriceNote("");
     setCondition("");
     setBrand("");
     setModel("");
@@ -407,7 +457,9 @@ export default function ListInventoryPage() {
 
             <input value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantity *" type="number" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
 
-            <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price" type="number" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
+            <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Numeric Price, e.g. 100" type="number" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
+
+            <input value={priceNote} onChange={(e) => setPriceNote(e.target.value)} placeholder="Price Text, e.g. $100 each, negotiable, contact for pricing" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500 md:col-span-2" />
 
             <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City *" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
 
@@ -424,7 +476,48 @@ export default function ListInventoryPage() {
 
             <input value={sku} onChange={(e) => setSku(e.target.value)} placeholder="SKU" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
 
-            <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Image URL" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500 md:col-span-2" />
+            <div className="rounded-2xl border border-slate-300 bg-slate-50 p-5 md:col-span-2">
+              <label className="block text-sm font-bold text-slate-950">
+                Inventory Image
+              </label>
+
+              <p className="mt-1 text-sm text-slate-600">
+                Upload an image or paste an image URL below.
+              </p>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadListingImage(file);
+                }}
+                className="mt-4 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-950"
+              />
+
+              {uploadingImage && (
+                <p className="mt-3 text-sm font-semibold text-slate-700">
+                  Uploading image...
+                </p>
+              )}
+
+              <input
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Image URL"
+                className="mt-4 w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+              />
+
+              {imageUrl && (
+                <div className="mt-4 flex h-48 items-center justify-center overflow-hidden rounded-2xl border border-slate-300 bg-white">
+                  <img
+                    src={imageUrl}
+                    alt="Inventory preview"
+                    className="h-full w-full object-contain p-2"
+                  />
+                </div>
+              )}
+            </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-semibold text-slate-800">
@@ -443,7 +536,7 @@ export default function ListInventoryPage() {
 
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} placeholder="Description" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500 md:col-span-2" />
 
-            <button type="submit" disabled={submittingListing} className="rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50 md:col-span-2">
+            <button type="submit" disabled={submittingListing || uploadingImage} className="rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50 md:col-span-2">
               {submittingListing ? "Adding Listing..." : "Add Inventory Listing"}
             </button>
           </form>
@@ -454,7 +547,7 @@ export default function ListInventoryPage() {
 
           <p className="mt-3 text-slate-700">
             Your Excel file should include columns: title, category, description, quantity, city,
-            province, price, condition, brand, model, sku, image_url, expires_at.
+            province, price, price_note, condition, brand, model, sku, image_url, expires_at.
             The expires_at column is optional. Leave it blank to use the default 30-day expiry.
           </p>
 
