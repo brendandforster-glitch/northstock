@@ -240,6 +240,12 @@ export default function SellerPage() {
             <a href="/company" className="text-sm font-bold text-slate-950">
               Company Profile
             </a>
+            <a
+  href="/company"
+  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-950"
+>
+  Edit Company Profile
+</a>
 
             <a
               href="/seller/leads"
