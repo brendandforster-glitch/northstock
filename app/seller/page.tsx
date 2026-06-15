@@ -11,6 +11,7 @@ type Listing = {
   city: string;
   province: string | null;
   price: number | null;
+price_note: string | null;
   status: string | null;
   expires_at: string | null;
   sku: string | null;
@@ -185,6 +186,10 @@ export default function SellerPage() {
       listing.status !== "sold" &&
       (!listing.expires_at || new Date(listing.expires_at) <= new Date())
   ).length;
+  const totalQuantity = listings.reduce(
+  (total, listing) => total + Number(listing.quantity || 0),
+  0
+);
 
   const filteredListings = listings.filter((item) => {
     const search = searchTerm.toLowerCase().trim();
@@ -261,11 +266,15 @@ export default function SellerPage() {
           </p>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-5">
+        <div className="mb-8 grid gap-4 md:grid-cols-6">
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
             <p className="text-sm text-slate-500">Total Listings</p>
             <h2 className="mt-2 text-3xl font-bold">{listings.length}</h2>
           </div>
+          <div className="rounded-3xl border bg-white p-6 shadow-sm">
+  <p className="text-sm text-slate-500">Total Quantity</p>
+  <h2 className="mt-2 text-3xl font-bold">{totalQuantity}</h2>
+</div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
             <p className="text-sm text-slate-500">Active Listings</p>
@@ -357,7 +366,11 @@ export default function SellerPage() {
 
                       <p>
                         <strong>Price:</strong>{" "}
-                        {item.price ? `$${item.price}` : "Contact for pricing"}
+                        {item.price_note
+  ? item.price_note
+  : item.price
+  ? `$${item.price}`
+  : "Contact for pricing"}
                       </p>
 
                       {item.sku && (

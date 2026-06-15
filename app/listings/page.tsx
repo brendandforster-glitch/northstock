@@ -15,6 +15,7 @@ type Listing = {
   status: string | null;
   expires_at: string | null;
   price: number | null;
+  price_note: string | null;
   condition: string | null;
   brand: string | null;
   model: string | null;
@@ -23,13 +24,10 @@ type Listing = {
   latitude: number | null;
   longitude: number | null;
   company_name?: string;
+company_id?: string;
 };
 
-const categories = [
-  "Office Furniture",
-  "Restaurant Equipment",
-  "Contractor Tools",
-];
+const categories = ["Office Furniture", "Restaurant Equipment", "Contractor Tools"];
 
 const regions = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
@@ -46,7 +44,9 @@ const regions = [
   "Newfoundland and Labrador", "Yukon", "Northwest Territories", "Nunavut",
 ];
 
-function formatPrice(price: number | null) {
+function formatPrice(price: number | null, priceNote?: string | null) {
+  if (priceNote) return priceNote;
+
   if (price === null || price === undefined) return "Contact for pricing";
 
   return new Intl.NumberFormat("en-US", {
@@ -93,15 +93,16 @@ export default function ListingsPage() {
     const listingsWithCompanies = await Promise.all(
       items.map(async (listing) => {
         const { data: company } = await supabase
-          .from("companies")
-          .select("company_name")
-          .eq("user_id", listing.user_id)
-          .maybeSingle();
+  .from("companies")
+  .select("id, company_name")
+  .eq("user_id", listing.user_id)
+  .maybeSingle();
 
-        return {
-          ...listing,
-          company_name: company?.company_name || "",
-        };
+return {
+  ...listing,
+  company_name: company?.company_name || "",
+  company_id: company?.id || "",
+};
       })
     );
 
@@ -224,7 +225,11 @@ export default function ListingsPage() {
   };
 
   useEffect(() => {
-    loadListings("", "", "", "", []);
+    const params = new URLSearchParams(window.location.search);
+    const homepageSearch = params.get("search") || "";
+
+    setKeywordSearch(homepageSearch);
+    loadListings("", "", "", homepageSearch, []);
   }, []);
 
   const applyFilters = () => {
@@ -243,6 +248,9 @@ export default function ListingsPage() {
     setRadiusKm("");
     setKeywordSearch("");
     setSelectedCategories([]);
+
+    window.history.replaceState({}, "", "/listings");
+
     loadListings("", "", "", "", []);
   };
 
@@ -514,14 +522,17 @@ export default function ListingsPage() {
                     <h2 className="mt-1 text-xl font-bold">{item.title}</h2>
 
                     <p className="mt-2 text-lg font-bold text-slate-950">
-                      {formatPrice(item.price)}
+                      {formatPrice(item.price, item.price_note)}
                     </p>
 
-                    {item.company_name && (
-                      <p className="mt-1 font-semibold text-slate-700">
-                        {item.company_name}
-                      </p>
-                    )}
+                    {item.company_name && item.company_id && (
+  <a
+    href={`/company/${item.company_id}`}
+    className="mt-1 block font-semibold text-blue-600 hover:underline"
+  >
+    {item.company_name}
+  </a>
+)}
 
                     <p className="mt-2 text-slate-700">
                       {item.city}

@@ -48,6 +48,7 @@ export default function Home() {
   );
   const [listingCount, setListingCount] = useState(0);
   const [sellerCount, setSellerCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -64,7 +65,9 @@ export default function Home() {
 
       const { data: listings } = await supabase
         .from("listings")
-        .select("id, title, category, city, province, price, price_note, image_url")
+        .select(
+          "id, title, category, city, province, price, price_note, image_url"
+        )
         .eq("status", "active")
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
@@ -129,6 +132,18 @@ export default function Home() {
     setContactName("");
     setContactEmail("");
     setContactMessage("");
+  }
+
+  function handleHomepageSearch(e: React.FormEvent) {
+    e.preventDefault();
+
+    const search = searchTerm.trim();
+
+    if (search) {
+      window.location.href = `/listings?search=${encodeURIComponent(search)}`;
+    } else {
+      window.location.href = "/listings";
+    }
   }
 
   return (
@@ -200,6 +215,25 @@ export default function Home() {
               item, brand, model, or SKU.
             </p>
 
+            <form
+              onSubmit={handleHomepageSearch}
+              className="mt-8 flex flex-col gap-3 sm:flex-row"
+            >
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search inventory by item, brand, model, or SKU..."
+                className="flex-1 rounded-xl border border-slate-300 bg-white px-5 py-4 text-slate-950 placeholder:text-slate-500"
+              />
+
+              <button
+                type="submit"
+                className="rounded-xl bg-slate-950 px-6 py-4 font-semibold text-white"
+              >
+                Search
+              </button>
+            </form>
+
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               {loggedIn ? (
                 <>
@@ -251,7 +285,10 @@ export default function Home() {
                   Recently listed inventory
                 </p>
 
-                <a href="/listings" className="text-sm font-bold text-slate-950">
+                <a
+                  href="/listings"
+                  className="text-sm font-bold text-slate-950"
+                >
                   View all
                 </a>
               </div>
