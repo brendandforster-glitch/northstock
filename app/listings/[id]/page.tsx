@@ -61,6 +61,12 @@ export default function ListingDetailsPage({
   const [savingListing, setSavingListing] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [buyerName, setBuyerName] = useState("");
+  const [buyerEmail, setBuyerEmail] = useState("");
+  const [buyerPhone, setBuyerPhone] = useState("");
+  const [buyerMessage, setBuyerMessage] = useState("");
+
   useEffect(() => {
     async function loadListing() {
       const {
@@ -70,6 +76,10 @@ export default function ListingDetailsPage({
       if (!user) {
         window.location.href = "/login";
         return;
+      }
+
+      if (user.email) {
+        setBuyerEmail(user.email);
       }
 
       const { data, error } = await supabase
@@ -170,6 +180,11 @@ export default function ListingDetailsPage({
   const requestQuote = async () => {
     if (!listing) return;
 
+    if (!buyerName || !buyerEmail || !buyerMessage) {
+      alert("Please complete your name, email, and message.");
+      return;
+    }
+
     setSubmitting(true);
 
     const {
@@ -182,14 +197,22 @@ export default function ListingDetailsPage({
       return;
     }
 
-    const { error: leadError } = await supabase
-      .from("leads")
-      .insert([
-        {
-          listing_id: listing.id,
-          buyer_email: user.email,
-        },
-      ]);
+    const fullMessage = `
+Name: ${buyerName}
+Email: ${buyerEmail}
+Phone: ${buyerPhone || "Not provided"}
+
+Message:
+${buyerMessage}
+    `.trim();
+
+    const { error: leadError } = await supabase.from("leads").insert([
+      {
+        listing_id: listing.id,
+        buyer_email: buyerEmail,
+        message: fullMessage,
+      },
+    ]);
 
     if (leadError) {
       setSubmitting(false);
@@ -207,7 +230,10 @@ export default function ListingDetailsPage({
         },
         body: JSON.stringify({
           sellerEmail: company?.email || "info@northstock.ca",
-          buyerEmail: user.email,
+          buyerEmail,
+          buyerName,
+          buyerPhone,
+          buyerMessage,
           listingTitle: listing.title,
           listingId: listing.id,
         }),
@@ -225,6 +251,10 @@ export default function ListingDetailsPage({
     }
 
     setSubmitting(false);
+    setShowQuoteForm(false);
+    setBuyerName("");
+    setBuyerPhone("");
+    setBuyerMessage("");
 
     alert(`Quote request saved. ${emailMessage}`);
   };
@@ -272,10 +302,10 @@ export default function ListingDetailsPage({
             <div className="flex h-[450px] items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
               {listing.image_url ? (
                 <img
-  src={listing.image_url}
-  alt={listing.title}
-  className="h-full w-full rounded-2xl object-contain p-2"
-/>
+                  src={listing.image_url}
+                  alt={listing.title}
+                  className="h-full w-full rounded-2xl object-contain p-2"
+                />
               ) : (
                 "Listing Image"
               )}
@@ -379,12 +409,64 @@ export default function ListingDetailsPage({
             </button>
 
             <button
-              onClick={requestQuote}
+              onClick={() => setShowQuoteForm(!showQuoteForm)}
               disabled={submitting}
               className="mt-4 w-full rounded-2xl bg-slate-950 py-4 text-lg font-semibold text-white disabled:opacity-50"
             >
-              {submitting ? "Sending Request..." : "Request Quote"}
+              {showQuoteForm ? "Close Request Form" : "Request Quote"}
             </button>
+
+            {showQuoteForm && (
+              <div className="mt-4 rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-bold text-slate-950">
+                  Request Quote
+                </h2>
+
+                <p className="mt-2 text-sm text-slate-700">
+                  Send your details and any questions to the seller.
+                </p>
+
+                <div className="mt-5 grid gap-4">
+                  <input
+                    value={buyerName}
+                    onChange={(e) => setBuyerName(e.target.value)}
+                    placeholder="Name *"
+                    className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+                  />
+
+                  <input
+                    value={buyerEmail}
+                    onChange={(e) => setBuyerEmail(e.target.value)}
+                    placeholder="Email *"
+                    type="email"
+                    className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+                  />
+
+                  <input
+                    value={buyerPhone}
+                    onChange={(e) => setBuyerPhone(e.target.value)}
+                    placeholder="Phone"
+                    className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+                  />
+
+                  <textarea
+                    value={buyerMessage}
+                    onChange={(e) => setBuyerMessage(e.target.value)}
+                    rows={5}
+                    placeholder="Ask about pricing, condition, shipping, availability, quantities, or any other questions."
+                    className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+                  />
+
+                  <button
+                    onClick={requestQuote}
+                    disabled={submitting}
+                    className="rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50"
+                  >
+                    {submitting ? "Sending Request..." : "Send Quote Request"}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {sellerListings.length > 0 && company && (
               <div className="mt-10">

@@ -132,6 +132,21 @@ export default function ListInventoryPage() {
     setUploadingImage(false);
   };
 
+  const getRowCategory = (row: any) => {
+    return String(row.category || row.Category || "").trim();
+  };
+
+  const validateExcelCategories = (rows: any[]) => {
+    const invalidRows = rows
+      .map((row, index) => ({
+        rowNumber: index + 2,
+        category: getRowCategory(row),
+      }))
+      .filter((row) => !categories.includes(row.category));
+
+    return invalidRows;
+  };
+
   const formatExcelRows = async (rows: any[], userId: string) => {
     const formattedRows = await Promise.all(
       rows.map(async (row: any) => {
@@ -154,7 +169,7 @@ export default function ListInventoryPage() {
         return {
           user_id: userId,
           title: row.title || row.Title || "",
-          category: row.category || row.Category || "",
+          category: getRowCategory(row),
           description: row.description || row.Description || "",
           quantity: Number(row.quantity || row.Quantity || 0),
           city: rowCity,
@@ -274,33 +289,33 @@ export default function ListInventoryPage() {
     const coordinates = await getCoordinates(city, province);
 
     const { data: insertedListing, error } = await supabase
-  .from("listings")
-  .insert([
-    {
-      user_id: user.id,
-      title,
-      category,
-      description,
-      quantity: Number(quantity),
-      city,
-      province,
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-      price: price ? Number(price) : null,
-      price_note: priceNote || null,
-      condition,
-      brand,
-      model,
-      sku,
-      image_url: imageUrl || null,
-      status: "active",
-      expires_at: expiresAt
-        ? getExpiryFromDateInput(expiresAt)
-        : getDefaultExpiry(),
-    },
-  ])
-  .select()
-  .single();
+      .from("listings")
+      .insert([
+        {
+          user_id: user.id,
+          title,
+          category,
+          description,
+          quantity: Number(quantity),
+          city,
+          province,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+          price: price ? Number(price) : null,
+          price_note: priceNote || null,
+          condition,
+          brand,
+          model,
+          sku,
+          image_url: imageUrl || null,
+          status: "active",
+          expires_at: expiresAt
+            ? getExpiryFromDateInput(expiresAt)
+            : getDefaultExpiry(),
+        },
+      ])
+      .select()
+      .single();
 
     setSubmittingListing(false);
 
@@ -308,25 +323,26 @@ export default function ListInventoryPage() {
       alert(error.message);
       return;
     }
+
     if (insertedListing) {
-  await fetch("/api/send-saved-search-alerts", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      listingId: insertedListing.id,
-      title: insertedListing.title,
-      category: insertedListing.category,
-      city: insertedListing.city,
-      province: insertedListing.province,
-      brand: insertedListing.brand,
-      model: insertedListing.model,
-      sku: insertedListing.sku,
-      description: insertedListing.description,
-    }),
-  });
-}
+      await fetch("/api/send-saved-search-alerts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          listingId: insertedListing.id,
+          title: insertedListing.title,
+          category: insertedListing.category,
+          city: insertedListing.city,
+          province: insertedListing.province,
+          brand: insertedListing.brand,
+          model: insertedListing.model,
+          sku: insertedListing.sku,
+          description: insertedListing.description,
+        }),
+      });
+    }
 
     if (!coordinates.latitude || !coordinates.longitude) {
       alert(
@@ -371,6 +387,17 @@ export default function ListInventoryPage() {
       return;
     }
 
+    const invalidRows = validateExcelCategories(excelRows);
+
+    if (invalidRows.length > 0) {
+      alert(
+        `Invalid category detected.\n\nAllowed categories:\n- Office Furniture\n- Restaurant Equipment\n- Contractor Tools\n\nInvalid rows:\n${invalidRows
+          .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
+          .join("\n")}`
+      );
+      return;
+    }
+
     setUploadingExcel(true);
 
     const {
@@ -401,6 +428,17 @@ export default function ListInventoryPage() {
   const replaceAllInventory = async () => {
     if (excelRows.length === 0) {
       alert("Please upload an Excel file first.");
+      return;
+    }
+
+    const invalidRows = validateExcelCategories(excelRows);
+
+    if (invalidRows.length > 0) {
+      alert(
+        `Invalid category detected.\n\nAllowed categories:\n- Office Furniture\n- Restaurant Equipment\n- Contractor Tools\n\nInvalid rows:\n${invalidRows
+          .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
+          .join("\n")}`
+      );
       return;
     }
 
@@ -453,7 +491,7 @@ export default function ListInventoryPage() {
   if (authChecking) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] flex items-center justify-center px-6">
-        <p className="text-slate-700 font-semibold">Checking login status...</p>
+        <p className="text-slate-800 font-semibold">Checking login status...</p>
       </main>
     );
   }
@@ -461,14 +499,22 @@ export default function ListInventoryPage() {
   return (
     <main className="min-h-screen bg-[#f7f8fa]">
       <div className="mx-auto max-w-5xl px-6 py-16">
-        <h1 className="text-4xl font-bold">List Your Inventory</h1>
+        <h1 className="text-4xl font-extrabold text-slate-950">
+          List Your Inventory
+        </h1>
 
-        <p className="mt-3 text-slate-700">
-          Add inventory directly to NorthStock or submit a request for help uploading.
+        <p className="mt-3 text-slate-800">
+          Add individual listings, upload inventory in bulk, or request help getting your inventory onto NorthStock.
         </p>
 
         <section className="mt-10 rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
-          <h2 className="text-2xl font-bold">Add Inventory One-by-One</h2>
+          <h2 className="text-2xl font-extrabold text-slate-950">
+            Add Individual Listings
+          </h2>
+
+          <p className="mt-2 text-slate-800">
+            Use this section to add one item or inventory group at a time.
+          </p>
 
           <form onSubmit={handleManualListingSubmit} className="mt-6 grid gap-5 md:grid-cols-2">
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title *" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
@@ -504,9 +550,22 @@ export default function ListInventoryPage() {
                 Inventory Image
               </label>
 
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-slate-700">
                 Upload an image or paste an image URL below.
               </p>
+
+              <div className="mt-3 rounded-xl border border-slate-300 bg-white p-4 text-sm text-slate-800">
+                Need an image URL? Use{" "}
+                <a
+                  href="https://postimages.org"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-blue-600 hover:underline"
+                >
+                  PostImages
+                </a>{" "}
+                to upload images and generate a public image URL.
+              </div>
 
               <input
                 type="file"
@@ -543,10 +602,10 @@ export default function ListInventoryPage() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-semibold text-slate-800">
+              <label className="mb-2 block text-sm font-bold text-slate-950">
                 Optional Expiry Date
               </label>
-              <p className="mb-3 text-sm text-slate-600">
+              <p className="mb-3 text-sm text-slate-700">
                 Leave blank and NorthStock will automatically expire this listing after 30 days.
               </p>
               <input
@@ -566,11 +625,17 @@ export default function ListInventoryPage() {
         </section>
 
         <section className="mt-10 rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
-          <h2 className="text-2xl font-bold">Bulk Upload with Excel</h2>
+          <h2 className="text-2xl font-extrabold text-slate-950">
+            Bulk Upload with Excel
+          </h2>
 
-          <p className="mt-3 text-slate-700">
-            Your Excel file should include columns: title, category, description, quantity, city,
-            province, price, price_note, condition, brand, model, sku, image_url, expires_at.
+          <p className="mt-3 text-slate-800">
+            Upload multiple listings at once using the NorthStock Excel template.
+            Your category values must match exactly: Office Furniture, Restaurant Equipment, or Contractor Tools.
+          </p>
+
+          <p className="mt-3 text-sm font-semibold text-slate-700">
+            Required columns: title, category, description, quantity, city, province, price, price_note, condition, brand, model, sku, image_url, expires_at.
             The expires_at column is optional. Leave it blank to use the default 30-day expiry.
           </p>
 
@@ -589,7 +654,7 @@ export default function ListInventoryPage() {
           />
 
           {excelRows.length > 0 && (
-            <div className="mt-5 rounded-xl border border-slate-300 bg-slate-50 p-4 text-slate-700">
+            <div className="mt-5 rounded-xl border border-slate-300 bg-slate-50 p-4 text-slate-800">
               {excelRows.length} rows ready to import.
             </div>
           )}
@@ -612,7 +677,13 @@ export default function ListInventoryPage() {
         </section>
 
         <section className="mt-10 rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
-          <h2 className="text-2xl font-bold">Need Help Uploading?</h2>
+          <h2 className="text-2xl font-extrabold text-slate-950">
+            Need Help Uploading?
+          </h2>
+
+          <p className="mt-2 text-slate-800">
+            If you have a large inventory file or need help getting started, send us your details and we can help with onboarding.
+          </p>
 
           <form onSubmit={handleSellerRequestSubmit} className="mt-6 space-y-5">
             <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Company Name *" className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
