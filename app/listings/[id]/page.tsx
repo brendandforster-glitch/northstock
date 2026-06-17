@@ -409,64 +409,12 @@ ${buyerMessage}
             </button>
 
             <button
-              onClick={() => setShowQuoteForm(!showQuoteForm)}
+              onClick={() => setShowQuoteForm(true)}
               disabled={submitting}
               className="mt-4 w-full rounded-2xl bg-slate-950 py-4 text-lg font-semibold text-white disabled:opacity-50"
             >
-              {showQuoteForm ? "Close Request Form" : "Request Quote"}
+              Request Quote
             </button>
-
-            {showQuoteForm && (
-              <div className="mt-4 rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-bold text-slate-950">
-                  Request Quote
-                </h2>
-
-                <p className="mt-2 text-sm text-slate-700">
-                  Send your details and any questions to the seller.
-                </p>
-
-                <div className="mt-5 grid gap-4">
-                  <input
-                    value={buyerName}
-                    onChange={(e) => setBuyerName(e.target.value)}
-                    placeholder="Name *"
-                    className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
-                  />
-
-                  <input
-                    value={buyerEmail}
-                    onChange={(e) => setBuyerEmail(e.target.value)}
-                    placeholder="Email *"
-                    type="email"
-                    className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
-                  />
-
-                  <input
-                    value={buyerPhone}
-                    onChange={(e) => setBuyerPhone(e.target.value)}
-                    placeholder="Phone"
-                    className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
-                  />
-
-                  <textarea
-                    value={buyerMessage}
-                    onChange={(e) => setBuyerMessage(e.target.value)}
-                    rows={5}
-                    placeholder="Ask about pricing, condition, shipping, availability, quantities, or any other questions."
-                    className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
-                  />
-
-                  <button
-                    onClick={requestQuote}
-                    disabled={submitting}
-                    className="rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50"
-                  >
-                    {submitting ? "Sending Request..." : "Send Quote Request"}
-                  </button>
-                </div>
-              </div>
-            )}
 
             {sellerListings.length > 0 && company && (
               <div className="mt-10">
@@ -505,6 +453,71 @@ ${buyerMessage}
           </div>
         </div>
       </div>
+
+      {showQuoteForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-950">
+                  Request Quote
+                </h2>
+
+                <p className="mt-2 text-sm text-slate-700">
+                  Send your details and any questions to the seller.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowQuoteForm(false)}
+                className="rounded-full border border-slate-300 px-3 py-1 text-sm font-bold text-slate-700"
+              >
+                X
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-4">
+              <input
+                value={buyerName}
+                onChange={(e) => setBuyerName(e.target.value)}
+                placeholder="Name *"
+                className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+              />
+
+              <input
+                value={buyerEmail}
+                onChange={(e) => setBuyerEmail(e.target.value)}
+                placeholder="Email *"
+                type="email"
+                className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+              />
+
+              <input
+                value={buyerPhone}
+                onChange={(e) => setBuyerPhone(e.target.value)}
+                placeholder="Phone"
+                className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+              />
+
+              <textarea
+                value={buyerMessage}
+                onChange={(e) => setBuyerMessage(e.target.value)}
+                rows={5}
+                placeholder="Ask about pricing, condition, shipping, availability, quantities, or any other questions."
+                className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+              />
+
+              <button
+                onClick={requestQuote}
+                disabled={submitting}
+                className="rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50"
+              >
+                {submitting ? "Sending Request..." : "Send Quote Request"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

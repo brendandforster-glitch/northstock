@@ -551,31 +551,21 @@ export default function ListInventoryPage() {
               </label>
 
               <p className="mt-1 text-sm text-slate-700">
-                Upload an image or paste an image URL below.
+                Upload an image directly or paste an image URL below.
               </p>
 
-              <div className="mt-3 rounded-xl border border-slate-300 bg-white p-4 text-sm text-slate-800">
-                Need an image URL? Use{" "}
-                <a
-                  href="https://postimages.org"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-blue-600 hover:underline"
-                >
-                  PostImages
-                </a>{" "}
-                to upload images and generate a public image URL.
-              </div>
-
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) uploadListingImage(file);
-                }}
-                className="mt-4 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-950"
-              />
+              <label className="mt-4 inline-flex cursor-pointer items-center justify-center rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
+                Choose Image File
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadListingImage(file);
+                  }}
+                  className="hidden"
+                />
+              </label>
 
               {uploadingImage && (
                 <p className="mt-3 text-sm font-semibold text-slate-700">
@@ -639,6 +629,25 @@ export default function ListInventoryPage() {
             The expires_at column is optional. Leave it blank to use the default 30-day expiry.
           </p>
 
+          <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">
+              Need Image URLs for Your Spreadsheet?
+            </p>
+
+            <p className="mt-1 text-sm text-slate-700">
+              Upload your images to{" "}
+              <a
+                href="https://postimages.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-blue-600 hover:underline"
+              >
+                PostImages
+              </a>{" "}
+              and paste each direct image URL into the <strong>image_url</strong> column of your Excel file.
+            </p>
+          </div>
+
           <button
             onClick={downloadExcelTemplate}
             className="mt-6 w-full rounded-xl border border-slate-300 bg-white py-4 font-semibold text-slate-950"
@@ -646,12 +655,15 @@ export default function ListInventoryPage() {
             Download NorthStock Excel Template
           </button>
 
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={handleExcelUpload}
-            className="mt-5 w-full rounded-xl border border-slate-300 bg-white p-4 text-slate-950"
-          />
+          <label className="mt-5 flex cursor-pointer items-center justify-center rounded-xl bg-slate-950 px-5 py-4 font-semibold text-white hover:bg-slate-800">
+            Choose Excel File
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleExcelUpload}
+              className="hidden"
+            />
+          </label>
 
           {excelRows.length > 0 && (
             <div className="mt-5 rounded-xl border border-slate-300 bg-slate-50 p-4 text-slate-800">
