@@ -16,7 +16,10 @@ export default function ForgotPasswordPage() {
     setSending(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo:
+  window.location.hostname === "localhost"
+    ? "http://localhost:3000/reset-password"
+    : "https://northstock.ca/reset-password",
     });
 
     setSending(false);
