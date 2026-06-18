@@ -206,10 +206,13 @@ export default function Home() {
 
             <p className="mt-6 max-w-xl text-lg text-slate-600">
   NorthStock is a free commercial inventory marketplace connecting
-  verified businesses across North America. Source inventory, list
-  surplus equipment, and connect directly with buyers and sellers in
-  one refined platform. Search by item, brand, model, SKU, city,
-  province/state, or radius.
+  verified businesses across North America. Built exclusively for
+  commercial kitchen equipment, office furniture, and contractor tools.
+</p>
+
+<p className="mt-4 max-w-xl text-lg text-slate-600">
+  Source inventory, list surplus equipment, and connect directly with
+  buyers and sellers in one refined platform.
 </p>
 
             <form
