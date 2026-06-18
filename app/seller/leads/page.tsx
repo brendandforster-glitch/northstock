@@ -7,6 +7,7 @@ type Lead = {
   id: string;
   listing_id: string;
   buyer_email: string | null;
+  message: string | null;
   created_at: string | null;
   listings: {
     id: string;
@@ -15,10 +16,13 @@ type Lead = {
     city: string;
     province: string | null;
     price: number | null;
+    price_note: string | null;
   } | null;
 };
 
-function formatPrice(price: number | null) {
+function formatPrice(price: number | null, priceNote?: string | null) {
+  if (priceNote) return priceNote;
+
   if (price === null || price === undefined) return "Contact for pricing";
 
   return new Intl.NumberFormat("en-US", {
@@ -78,6 +82,7 @@ export default function SellerLeadsPage() {
         id,
         listing_id,
         buyer_email,
+        message,
         created_at,
         listings (
           id,
@@ -85,7 +90,8 @@ export default function SellerLeadsPage() {
           category,
           city,
           province,
-          price
+          price,
+          price_note
         )
       `
       )
@@ -93,13 +99,13 @@ export default function SellerLeadsPage() {
       .order("created_at", { ascending: false });
 
     if (error) {
-  console.error(error);
-  setLeads([]);
-  return;
-}
+      console.error(error);
+      setLeads([]);
+      setLoading(false);
+      return;
+    }
 
-setLeads((data || []) as unknown as Lead[]);
-
+    setLeads((data || []) as unknown as Lead[]);
     setLoading(false);
   }
 
@@ -150,7 +156,7 @@ setLeads((data || []) as unknown as Lead[]);
             <h1 className="text-4xl font-bold">Quote Requests</h1>
 
             <p className="mt-2 text-slate-700">
-              View buyers who requested quotes on your inventory.
+              View buyers who requested quotes or information on your inventory.
             </p>
           </div>
 
@@ -174,8 +180,8 @@ setLeads((data || []) as unknown as Lead[]);
                   key={lead.id}
                   className="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm"
                 >
-                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                    <div>
+                  <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                    <div className="flex-1">
                       <p className="text-sm font-semibold text-slate-500">
                         {formatDate(lead.created_at)}
                       </p>
@@ -196,17 +202,33 @@ setLeads((data || []) as unknown as Lead[]);
                           </p>
 
                           <p className="mt-2 font-semibold text-slate-950">
-                            {formatPrice(item.price)}
+                            {formatPrice(item.price, item.price_note)}
                           </p>
                         </>
                       )}
 
-                      <p className="mt-4 text-slate-700">
-                        <span className="font-semibold text-slate-950">
-                          Buyer Email:
-                        </span>{" "}
-                        {lead.buyer_email || "Not available"}
-                      </p>
+                      <div className="mt-5 rounded-2xl border border-slate-300 bg-slate-50 p-5">
+                        <p className="font-semibold text-slate-950">
+                          Buyer Details
+                        </p>
+
+                        <p className="mt-3 text-slate-700">
+                          <span className="font-semibold text-slate-950">
+                            Buyer Email:
+                          </span>{" "}
+                          {lead.buyer_email || "Not available"}
+                        </p>
+
+                        <div className="mt-4">
+                          <p className="font-semibold text-slate-950">
+                            Message:
+                          </p>
+
+                          <p className="mt-2 whitespace-pre-wrap text-slate-700">
+                            {lead.message || "No message provided."}
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex flex-col gap-3 md:w-52">
@@ -221,7 +243,9 @@ setLeads((data || []) as unknown as Lead[]);
 
                       {lead.buyer_email && (
                         <a
-                          href={`mailto:${lead.buyer_email}?subject=NorthStock Quote Request`}
+                          href={`mailto:${lead.buyer_email}?subject=NorthStock Quote Request - ${
+                            item?.title || "Listing"
+                          }`}
                           className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-950"
                         >
                           Email Buyer

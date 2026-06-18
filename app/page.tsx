@@ -43,9 +43,7 @@ function formatPrice(price: number | null, priceNote?: string | null) {
 
 export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false);
-  const [featuredListings, setFeaturedListings] = useState<FeaturedListing[]>(
-    []
-  );
+  const [featuredListings, setFeaturedListings] = useState<FeaturedListing[]>([]);
   const [listingCount, setListingCount] = useState(0);
   const [sellerCount, setSellerCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,9 +63,7 @@ export default function Home() {
 
       const { data: listings } = await supabase
         .from("listings")
-        .select(
-          "id, title, category, city, province, price, price_note, image_url"
-        )
+        .select("id, title, category, city, province, price, price_note, image_url")
         .eq("status", "active")
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
@@ -200,19 +196,18 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
-            <p className="mb-4 inline-flex rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-700">
-              Free buyer and seller accounts
+            <p className="mb-4 inline-flex rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-800">
+              Verified members. Commercial inventory. One place.
             </p>
 
             <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
-              Buy and sell business inventory across North America.
+              Commercial Inventory. Verified Members. One Refined Marketplace.
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg text-slate-600">
-              NorthStock helps businesses list, discover, and request quotes on
-              commercial inventory including office furniture, restaurant
-              equipment, and contractor tools. Search by province, city, radius,
-              item, brand, model, or SKU.
+            <p className="mt-6 max-w-xl text-lg text-slate-700">
+              Buy and sell new and used office furniture, restaurant equipment,
+              and contractor tools across North America. Free member accounts.
+              No seller fees.
             </p>
 
             <form
@@ -270,18 +265,18 @@ export default function Home() {
               )}
             </div>
 
-            <div className="mt-8 grid max-w-xl grid-cols-2 gap-4 text-sm text-slate-600 md:grid-cols-4">
-              <div>Free signup</div>
-              <div>City + radius search</div>
-              <div>Bulk Excel uploads</div>
-              <div>No buyer fees</div>
+            <div className="mt-8 grid max-w-xl grid-cols-2 gap-4 text-sm font-semibold text-slate-700 md:grid-cols-4">
+              <div>Verified Members</div>
+              <div>Free Seller Accounts</div>
+              <div>No Seller Fees</div>
+              <div>North America Wide</div>
             </div>
           </div>
 
           <div className="rounded-3xl border bg-white p-5 shadow-sm">
             <div className="rounded-2xl bg-slate-100 p-6">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-500">
+                <p className="text-sm font-semibold text-slate-600">
                   Recently listed inventory
                 </p>
 
@@ -380,22 +375,55 @@ export default function Home() {
 
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="rounded-3xl border bg-white p-8 shadow-sm">
+          <h2 className="text-3xl font-bold">More Than a Marketplace</h2>
+
+          <p className="mt-4 max-w-3xl text-slate-700">
+            NorthStock is a growing network of businesses sourcing, listing,
+            and moving commercial inventory across North America.
+          </p>
+
+          <p className="mt-3 max-w-3xl text-slate-700">
+            Whether you're clearing warehouse space, searching for equipment,
+            or expanding your inventory channels, NorthStock helps connect
+            buyers and sellers in one dedicated platform.
+          </p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 pb-20">
+        <div className="rounded-3xl border bg-white p-8 shadow-sm">
           <h2 className="text-3xl font-bold">Why NorthStock?</h2>
 
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             <div className="rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold">Free buyer accounts</h3>
+              <h3 className="font-bold">Free member accounts</h3>
               <p className="mt-2 text-sm text-slate-600">
-                Browse inventory, save listings, save searches, and request
-                quotes with no buyer fees.
+                Create an account, browse inventory, save listings, save
+                searches, and request quotes.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 p-6">
+              <h3 className="font-bold">No seller fees</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Early sellers can list inventory and receive quote requests
+                without listing fees or seller fees.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 p-6">
+              <h3 className="font-bold">New and used inventory</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                List new, used, surplus, refurbished, overstock, or liquidation
+                inventory in one focused marketplace.
               </p>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-6">
               <h3 className="font-bold">Built for sellers</h3>
               <p className="mt-2 text-sm text-slate-600">
-                Upload inventory one-by-one or in bulk using Excel, manage
-                listings, and receive quote requests.
+                Upload individual listings or import inventory in bulk using
+                Excel, then manage everything from your seller dashboard.
               </p>
             </div>
 
@@ -408,26 +436,10 @@ export default function Home() {
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold">Commercial inventory only</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Focused on office furniture, restaurant equipment, and
-                contractor tools.
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-slate-50 p-6">
               <h3 className="font-bold">Company profiles</h3>
               <p className="mt-2 text-sm text-slate-600">
-                Sellers can create public profiles and showcase active
-                inventory in one place.
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold">Quote-based marketplace</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Buyers request quotes directly from listings so sellers can
-                follow up with serious leads.
+                Sellers can create public profiles, upload logos, and showcase
+                active inventory in one place.
               </p>
             </div>
           </div>
@@ -519,8 +531,8 @@ export default function Home() {
             </h2>
 
             <p className="mt-3 text-slate-300">
-              Create a free seller account, upload inventory, and start
-              receiving quote requests from buyers across North America.
+              Create a free seller account, upload new or used inventory, and
+              start receiving quote requests from buyers across North America.
             </p>
           </div>
 
