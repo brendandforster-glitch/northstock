@@ -201,14 +201,16 @@ export default function Home() {
             </p>
 
             <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
-              Commercial Inventory. Verified Members. One Refined Marketplace.
-            </h1>
+  Source and list commercial inventory across North America.
+</h1>
 
-            <p className="mt-6 max-w-xl text-lg text-slate-700">
-              Buy and sell new and used office furniture, restaurant equipment,
-              and contractor tools across North America. Free member accounts.
-              No seller fees.
-            </p>
+            <p className="mt-6 max-w-xl text-lg text-slate-600">
+  NorthStock is a free commercial inventory marketplace connecting
+  verified businesses across North America. Source inventory, list
+  surplus equipment, and connect directly with buyers and sellers in
+  one refined platform. Search by item, brand, model, SKU, city,
+  province/state, or radius.
+</p>
 
             <form
               onSubmit={handleHomepageSearch}
@@ -266,11 +268,11 @@ export default function Home() {
             </div>
 
             <div className="mt-8 grid max-w-xl grid-cols-2 gap-4 text-sm font-semibold text-slate-700 md:grid-cols-4">
-              <div>Verified Members</div>
-              <div>Free Seller Accounts</div>
-              <div>No Seller Fees</div>
-              <div>North America Wide</div>
-            </div>
+  <div>✓ Verified Businesses</div>
+  <div>✓ Free Accounts</div>
+  <div>✓ Bulk Excel Uploads</div>
+  <div>✓ No Seller Fees</div>
+</div>
           </div>
 
           <div className="rounded-3xl border bg-white p-5 shadow-sm">
