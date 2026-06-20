@@ -51,6 +51,14 @@ export default function AdminUploadPage() {
       .order("company_name", { ascending: true });
 
     setCompanies((data || []) as Company[]);
+
+    const params = new URLSearchParams(window.location.search);
+    const sellerFromUrl = params.get("seller");
+
+    if (sellerFromUrl) {
+      setSelectedSellerUserId(sellerFromUrl);
+    }
+
     setLoading(false);
   }
 
@@ -298,6 +306,10 @@ export default function AdminUploadPage() {
     );
   }
 
+  const selectedCompany = companies.find(
+    (company) => company.user_id === selectedSellerUserId
+  );
+
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <section className="mx-auto max-w-5xl px-6 py-10">
@@ -332,6 +344,14 @@ export default function AdminUploadPage() {
               </option>
             ))}
           </select>
+
+          {selectedCompany && (
+            <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-slate-800">
+              Selected seller:{" "}
+              <strong>{selectedCompany.company_name}</strong>
+              {selectedCompany.email ? ` — ${selectedCompany.email}` : ""}
+            </div>
+          )}
 
           <button
             onClick={downloadExcelTemplate}
