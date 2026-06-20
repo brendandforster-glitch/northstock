@@ -43,16 +43,13 @@ export default function AdminPage() {
       return;
     }
 
-    const allowedAdmins = [
-  "brendandforster@gmail.com",
-  "info@northstock.ca",
-];
+    const allowedAdmins = ["brendandforster@gmail.com", "info@northstock.ca"];
 
-if (!allowedAdmins.includes(user.email || "")) {
-  setAuthorized(false);
-  setLoading(false);
-  return;
-}
+    if (!allowedAdmins.includes(user.email || "")) {
+      setAuthorized(false);
+      setLoading(false);
+      return;
+    }
 
     setAuthorized(true);
 
@@ -114,7 +111,7 @@ if (!allowedAdmins.includes(user.email || "")) {
           <div>
             <h1 className="text-4xl font-bold">Admin Dashboard</h1>
             <p className="mt-2 text-slate-700">
-              NorthStock marketplace overview.
+              NorthStock marketplace overview and admin controls.
             </p>
           </div>
 
@@ -140,6 +137,55 @@ if (!allowedAdmins.includes(user.email || "")) {
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
             <p className="text-sm text-slate-500">Quote Requests</p>
             <h2 className="mt-2 text-3xl font-bold">{leadCount}</h2>
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-bold">Admin Controls</h2>
+          <p className="mt-2 text-slate-700">
+            Manage sellers, listings, seller requests, and assisted inventory uploads.
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <a
+              href="/admin/upload"
+              className="rounded-2xl border border-slate-300 bg-slate-950 p-5 text-white shadow-sm hover:bg-slate-800"
+            >
+              <h3 className="text-lg font-bold">Upload For Seller</h3>
+              <p className="mt-2 text-sm text-slate-300">
+                Import Excel inventory into a selected seller account.
+              </p>
+            </a>
+
+            <a
+              href="/admin/sellers"
+              className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm hover:border-slate-500"
+            >
+              <h3 className="text-lg font-bold">Manage Sellers</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                View company profiles and seller accounts.
+              </p>
+            </a>
+
+            <a
+              href="/admin/listings"
+              className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm hover:border-slate-500"
+            >
+              <h3 className="text-lg font-bold">Manage Listings</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Review, edit, renew, or delete marketplace listings.
+              </p>
+            </a>
+
+            <a
+              href="/admin/seller-requests"
+              className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm hover:border-slate-500"
+            >
+              <h3 className="text-lg font-bold">Seller Requests</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                View companies requesting help uploading inventory.
+              </p>
+            </a>
           </div>
         </div>
 
