@@ -59,10 +59,11 @@ export default function AcceptInvitePage({
 
     setCreating(true);
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: invite.email,
-      password,
-    });
+    const { data: signUpData, error: signUpError } =
+      await supabase.auth.signUp({
+        email: invite.email,
+        password,
+      });
 
     if (signUpError) {
       setCreating(false);
@@ -74,10 +75,7 @@ export default function AcceptInvitePage({
 
     if (!userId) {
       setCreating(false);
-      alert(
-        "Account created. Please check your email to confirm your account, then log in."
-      );
-      window.location.href = "/login";
+      window.location.href = "/invite-success";
       return;
     }
 
@@ -110,11 +108,7 @@ export default function AcceptInvitePage({
       return;
     }
 
-    alert(
-      "Your seller account has been created. Please check your email to confirm your account, then log in."
-    );
-
-    window.location.href = "/login";
+    window.location.href = "/invite-success";
   }
 
   if (loading) {

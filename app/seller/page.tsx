@@ -11,7 +11,7 @@ type Listing = {
   city: string;
   province: string | null;
   price: number | null;
-price_note: string | null;
+  price_note: string | null;
   status: string | null;
   expires_at: string | null;
   sku: string | null;
@@ -19,14 +19,45 @@ price_note: string | null;
   model: string | null;
 };
 
+type Company = {
+  id: string;
+  company_name: string;
+};
+
+function formatPrice(price: number | null, priceNote?: string | null) {
+  if (priceNote) return priceNote;
+  if (price === null || price === undefined) return "Contact for pricing";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
+function formatDate(dateString: string | null) {
+  if (!dateString) return "Not set";
+
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function SellerPage() {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [quoteRequests, setQuoteRequests] = useState(0);
 
-  async function loadListings() {
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  async function loadDashboard() {
     setLoading(true);
 
     const {
@@ -40,6 +71,16 @@ export default function SellerPage() {
 
     setUserId(user.id);
 
+    const { data: companyData } = await supabase
+      .from("companies")
+      .select("id, company_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (companyData) {
+      setCompany(companyData as Company);
+    }
+
     const { data, error } = await supabase
       .from("listings")
       .select("*")
@@ -47,7 +88,7 @@ export default function SellerPage() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      setListings(data);
+      setListings(data as Listing[]);
 
       const listingIds = data.map((listing) => listing.id);
 
@@ -69,10 +110,6 @@ export default function SellerPage() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    loadListings();
-  }, []);
-
   async function deleteListing(id: string) {
     if (!confirm("Delete this listing?")) return;
 
@@ -83,7 +120,7 @@ export default function SellerPage() {
       return;
     }
 
-    loadListings();
+    loadDashboard();
   }
 
   async function deleteAllListings() {
@@ -106,7 +143,7 @@ export default function SellerPage() {
     }
 
     alert("All listings deleted.");
-    loadListings();
+    loadDashboard();
   }
 
   async function renewListing(id: string) {
@@ -127,7 +164,7 @@ export default function SellerPage() {
       return;
     }
 
-    loadListings();
+    loadDashboard();
   }
 
   async function renewAllListings() {
@@ -149,7 +186,7 @@ export default function SellerPage() {
     }
 
     alert("All listings renewed.");
-    loadListings();
+    loadDashboard();
   }
 
   async function markSold(id: string) {
@@ -167,7 +204,7 @@ export default function SellerPage() {
       return;
     }
 
-    loadListings();
+    loadDashboard();
   }
 
   const activeListings = listings.filter(
@@ -186,10 +223,11 @@ export default function SellerPage() {
       listing.status !== "sold" &&
       (!listing.expires_at || new Date(listing.expires_at) <= new Date())
   ).length;
+
   const totalQuantity = listings.reduce(
-  (total, listing) => total + Number(listing.quantity || 0),
-  0
-);
+    (total, listing) => total + Number(listing.quantity || 0),
+    0
+  );
 
   const filteredListings = listings.filter((item) => {
     const search = searchTerm.toLowerCase().trim();
@@ -237,20 +275,7 @@ export default function SellerPage() {
               Browse Inventory
             </a>
 
-            <a href="/company" className="text-sm font-bold text-slate-950">
-              Company Profile
-            </a>
-            <a
-  href="/company"
-  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-950"
->
-  Edit Company Profile
-</a>
-
-            <a
-              href="/seller/leads"
-              className="text-sm font-bold text-slate-950"
-            >
+            <a href="/seller/leads" className="text-sm font-bold text-slate-950">
               Quote Requests
             </a>
 
@@ -258,46 +283,83 @@ export default function SellerPage() {
               href="/list-inventory"
               className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
             >
-              Add Inventory
+              Add / Bulk Upload Inventory
             </a>
           </div>
         </div>
       </header>
 
       <section className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold">Seller Dashboard</h1>
-          <p className="mt-2 text-slate-700">
-            Manage your NorthStock inventory.
-          </p>
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold">Seller Dashboard</h1>
+            <p className="mt-2 text-slate-700">
+              Manage your NorthStock company profile, inventory, and quote requests.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            {company ? (
+              <>
+                <a
+                  href={`/company/${company.id}`}
+                  className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-950"
+                >
+                  View Company Profile
+                </a>
+
+                <a
+                  href="/company"
+                  className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-950"
+                >
+                  Edit Company Profile
+                </a>
+              </>
+            ) : (
+              <a
+                href="/company"
+                className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white"
+              >
+                Create Company Profile
+              </a>
+            )}
+
+            <a
+              href="/seller/leads"
+              className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white"
+            >
+              View Quote Requests
+            </a>
+          </div>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-6">
+        <div className="mb-8 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
             <p className="text-sm text-slate-500">Total Listings</p>
             <h2 className="mt-2 text-3xl font-bold">{listings.length}</h2>
           </div>
-          <div className="rounded-3xl border bg-white p-6 shadow-sm">
-  <p className="text-sm text-slate-500">Total Quantity</p>
-  <h2 className="mt-2 text-3xl font-bold">{totalQuantity}</h2>
-</div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Active Listings</p>
+            <p className="text-sm text-slate-500">Total Quantity</p>
+            <h2 className="mt-2 text-3xl font-bold">{totalQuantity}</h2>
+          </div>
+
+          <div className="rounded-3xl border bg-white p-6 shadow-sm">
+            <p className="text-sm text-slate-500">Active</p>
             <h2 className="mt-2 text-3xl font-bold text-green-600">
               {activeListings}
             </h2>
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Expired Listings</p>
+            <p className="text-sm text-slate-500">Expired</p>
             <h2 className="mt-2 text-3xl font-bold text-red-600">
               {expiredListings}
             </h2>
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Sold Listings</p>
+            <p className="text-sm text-slate-500">Sold</p>
             <h2 className="mt-2 text-3xl font-bold text-amber-600">
               {soldListings}
             </h2>
@@ -311,17 +373,24 @@ export default function SellerPage() {
           </div>
         </div>
 
-        <div className="mb-8 flex flex-wrap gap-3">
+        <div className="mb-8 grid gap-3 md:grid-cols-3">
+          <a
+            href="/list-inventory"
+            className="rounded-xl bg-slate-950 px-5 py-4 text-center font-semibold text-white"
+          >
+            Add Inventory / Bulk Upload
+          </a>
+
           <button
             onClick={renewAllListings}
-            className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white"
+            className="rounded-xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-950"
           >
             Renew All Listings
           </button>
 
           <button
             onClick={deleteAllListings}
-            className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white"
+            className="rounded-xl bg-red-600 px-5 py-4 font-semibold text-white"
           >
             Delete All Listings
           </button>
@@ -360,6 +429,10 @@ export default function SellerPage() {
 
                     <h2 className="mt-1 text-2xl font-bold">{item.title}</h2>
 
+                    <p className="mt-2 font-semibold text-slate-950">
+                      {formatPrice(item.price, item.price_note)}
+                    </p>
+
                     <p className="mt-2 text-slate-700">
                       {item.city}
                       {item.province ? `, ${item.province}` : ""}
@@ -368,15 +441,6 @@ export default function SellerPage() {
                     <div className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
                       <p>
                         <strong>Quantity:</strong> {item.quantity}
-                      </p>
-
-                      <p>
-                        <strong>Price:</strong>{" "}
-                        {item.price_note
-  ? item.price_note
-  : item.price
-  ? `$${item.price}`
-  : "Contact for pricing"}
                       </p>
 
                       {item.sku && (
@@ -403,9 +467,7 @@ export default function SellerPage() {
 
                       <p>
                         <strong>Expires:</strong>{" "}
-                        {item.expires_at
-                          ? new Date(item.expires_at).toLocaleDateString()
-                          : "Not set"}
+                        {formatDate(item.expires_at)}
                       </p>
                     </div>
                   </div>
