@@ -52,6 +52,7 @@ export default function SellerPage() {
   const [userId, setUserId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [quoteRequests, setQuoteRequests] = useState(0);
+  const [listingViews, setListingViews] = useState(0);
 
   useEffect(() => {
     loadDashboard();
@@ -114,18 +115,26 @@ export default function SellerPage() {
       const listingIds = data.map((listing) => listing.id);
 
       if (listingIds.length > 0) {
-        const { count } = await supabase
+        const { count: leadCount } = await supabase
           .from("leads")
           .select("*", { count: "exact", head: true })
           .in("listing_id", listingIds);
 
-        setQuoteRequests(count || 0);
+        const { count: viewCount } = await supabase
+          .from("listing_views")
+          .select("*", { count: "exact", head: true })
+          .in("listing_id", listingIds);
+
+        setQuoteRequests(leadCount || 0);
+        setListingViews(viewCount || 0);
       } else {
         setQuoteRequests(0);
+        setListingViews(0);
       }
     } else {
       setListings([]);
       setQuoteRequests(0);
+      setListingViews(0);
     }
 
     setLoading(false);
@@ -252,6 +261,9 @@ export default function SellerPage() {
 
   const quoteRequestsPerListing =
     listings.length > 0 ? (quoteRequests / listings.length).toFixed(2) : "0.00";
+
+  const viewsPerListing =
+    listings.length > 0 ? (listingViews / listings.length).toFixed(2) : "0.00";
 
   const sellerHealth =
     activeListings > 0 && quoteRequests > 0
@@ -411,7 +423,7 @@ export default function SellerPage() {
             <div>
               <h2 className="text-2xl font-bold">Inventory Performance</h2>
               <p className="mt-2 text-slate-700">
-                A quick snapshot of your inventory activity and quote request performance.
+                A quick snapshot of your inventory activity, visibility, and quote request performance.
               </p>
             </div>
 
@@ -423,10 +435,20 @@ export default function SellerPage() {
             </a>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
               <p className="text-sm text-slate-500">Seller Status</p>
               <h3 className="mt-2 text-xl font-bold">{sellerHealth}</h3>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Listing Views</p>
+              <h3 className="mt-2 text-3xl font-bold">{listingViews}</h3>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Views / Listing</p>
+              <h3 className="mt-2 text-3xl font-bold">{viewsPerListing}</h3>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -443,11 +465,6 @@ export default function SellerPage() {
                   ? `${Math.round((activeListings / listings.length) * 100)}%`
                   : "0%"}
               </h3>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Inventory Units</p>
-              <h3 className="mt-2 text-3xl font-bold">{totalQuantity}</h3>
             </div>
           </div>
         </div>

@@ -98,6 +98,13 @@ export default function ListingDetailsPage({
 
       setListing(data as Listing);
 
+await supabase.from("listing_views").insert([
+  {
+    listing_id: data.id,
+    viewer_id: user.id,
+  },
+]);
+
       const { data: savedData } = await supabase
         .from("saved_listings")
         .select("id")
