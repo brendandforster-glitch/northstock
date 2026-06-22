@@ -72,20 +72,20 @@ export default function SellerPage() {
     setUserId(user.id);
 
     const {
-  data: { session },
-} = await supabase.auth.getSession();
+      data: { session },
+    } = await supabase.auth.getSession();
 
-if (session?.access_token) {
-  await fetch("/api/claim-company", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      accessToken: session.access_token,
-    }),
-  });
-}
+    if (session?.access_token) {
+      await fetch("/api/claim-company", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accessToken: session.access_token,
+        }),
+      });
+    }
 
     const { data: companyData } = await supabase
       .from("companies")
@@ -250,6 +250,18 @@ if (session?.access_token) {
     0
   );
 
+  const quoteRequestsPerListing =
+    listings.length > 0 ? (quoteRequests / listings.length).toFixed(2) : "0.00";
+
+  const sellerHealth =
+    activeListings > 0 && quoteRequests > 0
+      ? "Active with buyer interest"
+      : activeListings > 0
+      ? "Active inventory listed"
+      : listings.length > 0
+      ? "Needs renewal"
+      : "No inventory listed";
+
   const filteredListings = listings.filter((item) => {
     const search = searchTerm.toLowerCase().trim();
 
@@ -391,6 +403,52 @@ if (session?.access_token) {
             <h2 className="mt-2 text-3xl font-bold text-blue-600">
               {quoteRequests}
             </h2>
+          </div>
+        </div>
+
+        <div className="mb-8 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Inventory Performance</h2>
+              <p className="mt-2 text-slate-700">
+                A quick snapshot of your inventory activity and quote request performance.
+              </p>
+            </div>
+
+            <a
+              href="/seller/leads"
+              className="text-sm font-bold text-blue-600 hover:underline"
+            >
+              View Quote Requests →
+            </a>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Seller Status</p>
+              <h3 className="mt-2 text-xl font-bold">{sellerHealth}</h3>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Quote Requests / Listing</p>
+              <h3 className="mt-2 text-3xl font-bold">
+                {quoteRequestsPerListing}
+              </h3>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Active Share</p>
+              <h3 className="mt-2 text-3xl font-bold">
+                {listings.length > 0
+                  ? `${Math.round((activeListings / listings.length) * 100)}%`
+                  : "0%"}
+              </h3>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Inventory Units</p>
+              <h3 className="mt-2 text-3xl font-bold">{totalQuantity}</h3>
+            </div>
           </div>
         </div>
 

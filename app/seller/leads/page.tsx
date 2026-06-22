@@ -3,26 +3,27 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+type Listing = {
+  id: string;
+  title: string;
+  category: string;
+  city: string;
+  province: string | null;
+  price: number | null;
+  price_note: string | null;
+};
+
 type Lead = {
   id: string;
   listing_id: string;
   buyer_email: string | null;
   message: string | null;
   created_at: string | null;
-  listings: {
-    id: string;
-    title: string;
-    category: string;
-    city: string;
-    province: string | null;
-    price: number | null;
-    price_note: string | null;
-  } | null;
+  listing?: Listing | null;
 };
 
 function formatPrice(price: number | null, priceNote?: string | null) {
   if (priceNote) return priceNote;
-
   if (price === null || price === undefined) return "Contact for pricing";
 
   return new Intl.NumberFormat("en-US", {
@@ -64,10 +65,17 @@ export default function SellerLeadsPage() {
 
     const { data: sellerListings, error: listingError } = await supabase
       .from("listings")
-      .select("id")
+      .select("id, title, category, city, province, price, price_note")
       .eq("user_id", user.id);
 
-    if (listingError || !sellerListings || sellerListings.length === 0) {
+    if (listingError) {
+      alert(listingError.message);
+      setLeads([]);
+      setLoading(false);
+      return;
+    }
+
+    if (!sellerListings || sellerListings.length === 0) {
       setLeads([]);
       setLoading(false);
       return;
@@ -75,37 +83,29 @@ export default function SellerLeadsPage() {
 
     const listingIds = sellerListings.map((listing) => listing.id);
 
-    const { data, error } = await supabase
+    const { data: leadData, error: leadError } = await supabase
       .from("leads")
-      .select(
-        `
-        id,
-        listing_id,
-        buyer_email,
-        message,
-        created_at,
-        listings (
-          id,
-          title,
-          category,
-          city,
-          province,
-          price,
-          price_note
-        )
-      `
-      )
+      .select("id, listing_id, buyer_email, message, created_at")
       .in("listing_id", listingIds)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error(error);
+    if (leadError) {
+      alert(leadError.message);
       setLeads([]);
       setLoading(false);
       return;
     }
 
-    setLeads((data || []) as unknown as Lead[]);
+    const listingsById = new Map(
+      sellerListings.map((listing) => [listing.id, listing as Listing])
+    );
+
+    const enrichedLeads = (leadData || []).map((lead) => ({
+      ...lead,
+      listing: listingsById.get(lead.listing_id) || null,
+    }));
+
+    setLeads(enrichedLeads as Lead[]);
     setLoading(false);
   }
 
@@ -173,7 +173,7 @@ export default function SellerLeadsPage() {
         <div className="mt-8 space-y-5">
           {leads.length > 0 ? (
             leads.map((lead) => {
-              const item = lead.listings;
+              const item = lead.listing;
 
               return (
                 <div
