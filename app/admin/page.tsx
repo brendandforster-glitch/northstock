@@ -12,6 +12,10 @@ type Lead = {
   seller_company?: string;
 };
 
+type ListingQuantity = {
+  quantity: number | null;
+};
+
 function formatDate(dateString: string | null) {
   if (!dateString) return "Unknown date";
 
@@ -30,8 +34,12 @@ export default function AdminPage() {
   const [activeListingCount, setActiveListingCount] = useState(0);
   const [expiredListingCount, setExpiredListingCount] = useState(0);
   const [soldListingCount, setSoldListingCount] = useState(0);
+  const [totalQuantity, setTotalQuantity] = useState(0);
   const [companyCount, setCompanyCount] = useState(0);
   const [leadCount, setLeadCount] = useState(0);
+  const [sellerRequestCount, setSellerRequestCount] = useState(0);
+  const [pendingInviteCount, setPendingInviteCount] = useState(0);
+  const [acceptedInviteCount, setAcceptedInviteCount] = useState(0);
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
 
   useEffect(() => {
@@ -81,6 +89,15 @@ export default function AdminPage() {
       .select("*", { count: "exact", head: true })
       .eq("status", "sold");
 
+    const { data: quantityData } = await supabase
+      .from("listings")
+      .select("quantity");
+
+    const totalQty = ((quantityData || []) as ListingQuantity[]).reduce(
+      (sum, item) => sum + Number(item.quantity || 0),
+      0
+    );
+
     const { count: companies } = await supabase
       .from("companies")
       .select("*", { count: "exact", head: true });
@@ -88,6 +105,20 @@ export default function AdminPage() {
     const { count: leads } = await supabase
       .from("leads")
       .select("*", { count: "exact", head: true });
+
+    const { count: sellerRequests } = await supabase
+      .from("seller_requests")
+      .select("*", { count: "exact", head: true });
+
+    const { count: pendingInvites } = await supabase
+      .from("seller_invites")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending");
+
+    const { count: acceptedInvites } = await supabase
+      .from("seller_invites")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "accepted");
 
     const { data: leadsData } = await supabase
       .from("leads")
@@ -114,11 +145,14 @@ export default function AdminPage() {
         let sellerCompany = "Unknown seller";
 
         if (listing?.user_id) {
-          const { data: company } = await supabase
+          const { data: companyData } = await supabase
             .from("companies")
             .select("company_name")
             .eq("user_id", listing.user_id)
-            .maybeSingle();
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          const company = companyData?.[0];
 
           sellerCompany = company?.company_name || "Unknown seller";
         }
@@ -135,8 +169,12 @@ export default function AdminPage() {
     setActiveListingCount(activeListings || 0);
     setExpiredListingCount(expiredListings || 0);
     setSoldListingCount(soldListings || 0);
+    setTotalQuantity(totalQty);
     setCompanyCount(companies || 0);
     setLeadCount(leads || 0);
+    setSellerRequestCount(sellerRequests || 0);
+    setPendingInviteCount(pendingInvites || 0);
+    setAcceptedInviteCount(acceptedInvites || 0);
     setRecentLeads(enrichedLeads as Lead[]);
     setLoading(false);
   }
@@ -227,12 +265,56 @@ export default function AdminPage() {
         </div>
 
         <div className="mt-10 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Marketplace Analytics</h2>
+              <p className="mt-2 text-slate-700">
+                Snapshot of marketplace health, inventory volume, onboarding, and seller interest.
+              </p>
+            </div>
+
+            <a
+              href="/admin/invites"
+              className="text-sm font-bold text-blue-600 hover:underline"
+            >
+              View Invites →
+            </a>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Total Inventory Quantity</p>
+              <h3 className="mt-2 text-3xl font-bold">{totalQuantity}</h3>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Seller Requests</p>
+              <h3 className="mt-2 text-3xl font-bold">{sellerRequestCount}</h3>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Pending Invites</p>
+              <h3 className="mt-2 text-3xl font-bold text-amber-600">
+                {pendingInviteCount}
+              </h3>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">Accepted Invites</p>
+              <h3 className="mt-2 text-3xl font-bold text-green-600">
+                {acceptedInviteCount}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-bold">Admin Controls</h2>
           <p className="mt-2 text-slate-700">
             Manage sellers, listings, seller requests, and assisted inventory uploads.
           </p>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <a
               href="/admin/upload"
               className="rounded-2xl border border-slate-300 bg-slate-950 p-5 text-white shadow-sm hover:bg-slate-800"
@@ -270,6 +352,16 @@ export default function AdminPage() {
               <h3 className="text-lg font-bold">Seller Requests</h3>
               <p className="mt-2 text-sm text-slate-600">
                 View companies requesting help uploading inventory.
+              </p>
+            </a>
+
+            <a
+              href="/admin/invites"
+              className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm hover:border-slate-500"
+            >
+              <h3 className="text-lg font-bold">Seller Invites</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Track pending and accepted seller invitations.
               </p>
             </a>
           </div>
