@@ -71,14 +71,35 @@ export default function SellerPage() {
 
     setUserId(user.id);
 
+    const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+if (session?.access_token) {
+  await fetch("/api/claim-company", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      accessToken: session.access_token,
+    }),
+  });
+}
+
     const { data: companyData } = await supabase
       .from("companies")
       .select("id, company_name")
       .eq("user_id", user.id)
-      .maybeSingle();
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    if (companyData) {
-      setCompany(companyData as Company);
+    const companyRow = companyData?.[0];
+
+    if (companyRow) {
+      setCompany(companyRow as Company);
+    } else {
+      setCompany(null);
     }
 
     const { data, error } = await supabase
@@ -312,7 +333,7 @@ export default function SellerPage() {
                   href="/company"
                   className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-950"
                 >
-                  Edit Company Profile
+                  Manage Company Profile
                 </a>
               </>
             ) : (
@@ -320,7 +341,7 @@ export default function SellerPage() {
                 href="/company"
                 className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white"
               >
-                Create Company Profile
+                Manage Company Profile
               </a>
             )}
 

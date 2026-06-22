@@ -13,6 +13,12 @@ type Invite = {
   status: string | null;
 };
 
+type Company = {
+  id: string;
+  user_id: string | null;
+  email: string | null;
+};
+
 export default function AcceptInvitePage({
   params,
 }: {
@@ -58,6 +64,41 @@ export default function AcceptInvitePage({
     }
 
     setCreating(true);
+
+    const { data: companyData, error: companyLoadError } = await supabase
+      .from("companies")
+      .select("id, user_id, email")
+      .eq("id", invite.company_id)
+      .single();
+
+    if (companyLoadError || !companyData) {
+      setCreating(false);
+      alert("Company profile could not be found. Please contact NorthStock.");
+      return;
+    }
+
+    const company = companyData as Company;
+
+    const companyEmail = (company.email || "").toLowerCase().trim();
+    const inviteEmail = invite.email.toLowerCase().trim();
+
+    const adminHoldingEmails = ["info@northstock.ca"];
+
+    const companyIsUnclaimed = !company.user_id;
+    const companyEmailMatchesInvite = companyEmail === inviteEmail;
+    const companyIsAdminHeld = adminHoldingEmails.includes(companyEmail);
+
+    if (
+      !companyIsUnclaimed &&
+      !companyEmailMatchesInvite &&
+      !companyIsAdminHeld
+    ) {
+      setCreating(false);
+      alert(
+        "This company profile is already assigned to another seller. Please contact NorthStock."
+      );
+      return;
+    }
 
     const { data: signUpData, error: signUpError } =
       await supabase.auth.signUp({

@@ -70,7 +70,7 @@ export async function POST(request: Request) {
           province: province || "",
           description: "",
           logo_url: "",
-          user_id: user.id,
+          user_id: null,
         },
       ])
       .select("id")

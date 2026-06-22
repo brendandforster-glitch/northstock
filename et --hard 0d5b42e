@@ -1,0 +1,20 @@
+[33m0d5b42e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Improve admin dashboard and seller management
+[33mc5fd645[m Add admin upload for sellers
+[33m3f2c59e[m Refine homepage category positioning
+[33m01d58bc[m Homepage messaging refresh
+[33md555e81[m Update homepage marketplace positioning
+[33mec3c686[m Added quote request form, seller profile links, company profiles, forgot password fixes
+[33me3ea838[m Improve inventory upload flow and expand city coverage
+[33md5ea2f3[m Company profiles, quote routing, saved searches, bulk upload improvements
+[33mc5c7102[m Launch-ready MVP
+[33mbf2530a[m Finalize launch polish
+[33mb2f4c98[m Add homepage contact form
+[33mc97dc0a[m Add saved search email alerts
+[33meba7e9c[m Add saved search alert route
+[33m7ed2c7c[m Added Google Analytics
+[33md83cf90[m Added SEO metadata
+[33me9104cb[m Allow multiple admin accounts
+[33mfa064dd[m Improve company profile editor and logo preview
+[33mab7ad43[m Add recent quote requests to admin dashboard
+[33m2114152[m Add working category filters
+[33m36559a7[m Add mark sold action to seller dashboard

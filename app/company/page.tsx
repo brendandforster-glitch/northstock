@@ -24,6 +24,8 @@ export default function CompanyPage() {
   }, []);
 
   async function loadCompany() {
+    setLoading(true);
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -33,22 +35,60 @@ export default function CompanyPage() {
       return;
     }
 
-    const { data } = await supabase
+    const userEmail = (user.email || "").toLowerCase().trim();
+
+    const { data: companyByEmail, error: emailError } = await supabase
       .from("companies")
       .select("*")
       .eq("user_id", user.id)
-      .maybeSingle();
+      .ilike("email", userEmail)
+      .limit(1);
 
-    if (data) {
-      setCompanyId(data.id);
-      setCompanyName(data.company_name || "");
-      setDescription(data.description || "");
-      setWebsite(data.website || "");
-      setPhone(data.phone || "");
-      setEmail(data.email || "");
-      setCity(data.city || "");
-      setProvince(data.province || "");
-      setLogoUrl(data.logo_url || "");
+    if (emailError) {
+      alert(emailError.message);
+      setLoading(false);
+      return;
+    }
+
+    let company = companyByEmail?.[0];
+
+    if (!company) {
+      const { data: companyByUser, error: userError } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (userError) {
+        alert(userError.message);
+        setLoading(false);
+        return;
+      }
+
+      company = companyByUser?.[0];
+    }
+
+    if (company) {
+      setCompanyId(company.id);
+      setCompanyName(company.company_name || "");
+      setDescription(company.description || "");
+      setWebsite(company.website || "");
+      setPhone(company.phone || "");
+      setEmail(company.email || "");
+      setCity(company.city || "");
+      setProvince(company.province || "");
+      setLogoUrl(company.logo_url || "");
+    } else {
+      setCompanyId(null);
+      setCompanyName("");
+      setDescription("");
+      setWebsite("");
+      setPhone("");
+      setEmail(user.email || "");
+      setCity("");
+      setProvince("");
+      setLogoUrl("");
     }
 
     setLoading(false);
@@ -104,7 +144,7 @@ export default function CompanyPage() {
       return;
     }
 
-    if (!companyName) {
+    if (!companyName.trim()) {
       setSaving(false);
       alert("Company name is required.");
       return;
