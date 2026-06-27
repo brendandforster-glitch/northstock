@@ -314,7 +314,7 @@ export default function AdminPage() {
             Manage sellers, listings, seller requests, and assisted inventory uploads.
           </p>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             <a
               href="/admin/upload"
               className="rounded-2xl border border-slate-300 bg-slate-950 p-5 text-white shadow-sm hover:bg-slate-800"
@@ -364,6 +364,16 @@ export default function AdminPage() {
                 Track pending and accepted seller invitations.
               </p>
             </a>
+            <a
+  href="/admin/email"
+  className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm hover:border-slate-500"
+>
+  <h3 className="text-lg font-bold">Email Campaigns</h3>
+
+  <p className="mt-2 text-sm text-slate-600">
+    Send newsletters and announcements to NorthStock members.
+  </p>
+</a>
           </div>
         </div>
 

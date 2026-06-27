@@ -236,6 +236,43 @@ export default function SellerPage() {
 
     loadDashboard();
   }
+  async function downloadInventory() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    window.location.href = "/login";
+    return;
+  }
+
+  const response = await fetch("/api/seller/export-inventory", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      accessToken: session.access_token,
+    }),
+  });
+
+  if (!response.ok) {
+    alert("Inventory export failed. Please try again.");
+    return;
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "northstock-inventory.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.URL.revokeObjectURL(url);
+}
 
   const activeListings = listings.filter(
     (listing) =>
@@ -469,13 +506,20 @@ export default function SellerPage() {
           </div>
         </div>
 
-        <div className="mb-8 grid gap-3 md:grid-cols-3">
+        <div className="mb-8 grid gap-3 md:grid-cols-4">
           <a
             href="/list-inventory"
             className="rounded-xl bg-slate-950 px-5 py-4 text-center font-semibold text-white"
           >
             Add Inventory / Bulk Upload
           </a>
+          
+          <button
+  onClick={downloadInventory}
+  className="rounded-xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-950"
+>
+  Download Current Inventory
+</button>
 
           <button
             onClick={renewAllListings}

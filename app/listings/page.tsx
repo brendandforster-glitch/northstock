@@ -24,10 +24,11 @@ type Listing = {
   latitude: number | null;
   longitude: number | null;
   company_name?: string;
-company_id?: string;
+  company_id?: string;
 };
 
 const categories = ["Office Furniture", "Restaurant Equipment", "Contractor Tools"];
+const conditions = ["New", "Used", "Refurbished"];
 
 const regions = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
@@ -46,7 +47,6 @@ const regions = [
 
 function formatPrice(price: number | null, priceNote?: string | null) {
   if (priceNote) return priceNote;
-
   if (price === null || price === undefined) return "Contact for pricing";
 
   return new Intl.NumberFormat("en-US", {
@@ -73,6 +73,7 @@ export default function ListingsPage() {
   const [citySearch, setCitySearch] = useState("");
   const [radiusKm, setRadiusKm] = useState("");
   const [keywordSearch, setKeywordSearch] = useState("");
+  const [selectedCondition, setSelectedCondition] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [savingSearch, setSavingSearch] = useState(false);
 
@@ -92,17 +93,20 @@ export default function ListingsPage() {
   const addCompanyNames = async (items: Listing[]) => {
     const listingsWithCompanies = await Promise.all(
       items.map(async (listing) => {
-        const { data: company } = await supabase
-  .from("companies")
-  .select("id, company_name")
-  .eq("user_id", listing.user_id)
-  .maybeSingle();
+        const { data: companyData } = await supabase
+          .from("companies")
+          .select("id, company_name")
+          .eq("user_id", listing.user_id)
+          .order("created_at", { ascending: false })
+          .limit(1);
 
-return {
-  ...listing,
-  company_name: company?.company_name || "",
-  company_id: company?.id || "",
-};
+        const company = companyData?.[0];
+
+        return {
+          ...listing,
+          company_name: company?.company_name || "",
+          company_id: company?.id || "",
+        };
       })
     );
 
@@ -122,6 +126,7 @@ return {
         item.model,
         item.sku,
         item.category,
+        item.condition,
       ]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(search))
@@ -133,7 +138,8 @@ return {
     cityFilter = citySearch,
     radiusFilter = radiusKm,
     keywordFilter = keywordSearch,
-    categoryFilter = selectedCategories
+    categoryFilter = selectedCategories,
+    conditionFilter = selectedCondition
   ) => {
     setLoading(true);
 
@@ -182,6 +188,12 @@ return {
           );
         }
 
+        if (conditionFilter) {
+          filteredData = filteredData.filter(
+            (item) => item.condition === conditionFilter
+          );
+        }
+
         filteredData = applyKeywordFilter(filteredData, keywordFilter);
 
         setListings(await addCompanyNames(filteredData));
@@ -212,6 +224,10 @@ return {
       query = query.in("category", categoryFilter);
     }
 
+    if (conditionFilter) {
+      query = query.eq("condition", conditionFilter);
+    }
+
     const { data, error } = await query;
 
     if (!error && data) {
@@ -229,7 +245,7 @@ return {
     const homepageSearch = params.get("search") || "";
 
     setKeywordSearch(homepageSearch);
-    loadListings("", "", "", homepageSearch, []);
+    loadListings("", "", "", homepageSearch, [], "");
   }, []);
 
   const applyFilters = () => {
@@ -238,7 +254,8 @@ return {
       citySearch,
       radiusKm,
       keywordSearch,
-      selectedCategories
+      selectedCategories,
+      selectedCondition
     );
   };
 
@@ -247,11 +264,12 @@ return {
     setCitySearch("");
     setRadiusKm("");
     setKeywordSearch("");
+    setSelectedCondition("");
     setSelectedCategories([]);
 
     window.history.replaceState({}, "", "/listings");
 
-    loadListings("", "", "", "", []);
+    loadListings("", "", "", "", [], "");
   };
 
   const saveCurrentSearch = async () => {
@@ -273,6 +291,7 @@ return {
     const searchNameParts = [
       keywordSearch ? keywordSearch : "",
       categoryName,
+      selectedCondition ? selectedCondition : "",
       citySearch ? citySearch : "",
       selectedRegion ? selectedRegion : "",
       radiusKm ? `${radiusKm} km` : "",
@@ -371,6 +390,41 @@ return {
                 placeholder="Search item, brand, model, SKU..."
                 className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950 placeholder:text-slate-500"
               />
+            </div>
+
+            <div>
+              <p className="mb-3 text-sm font-semibold text-slate-800">
+                Condition
+              </p>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCondition("")}
+                  className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
+                    selectedCondition === ""
+                      ? "border-slate-950 bg-slate-950 text-white"
+                      : "border-slate-300 bg-white text-slate-950"
+                  }`}
+                >
+                  All
+                </button>
+
+                {conditions.map((condition) => (
+                  <button
+                    key={condition}
+                    type="button"
+                    onClick={() => setSelectedCondition(condition)}
+                    className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
+                      selectedCondition === condition
+                        ? "border-slate-950 bg-slate-950 text-white"
+                        : "border-slate-300 bg-white text-slate-950"
+                    }`}
+                  >
+                    {condition}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -480,6 +534,8 @@ return {
               <p className="mt-1 text-slate-700">
                 {keywordSearch
                   ? `Showing results for "${keywordSearch}"`
+                  : selectedCondition
+                  ? `Showing ${selectedCondition.toLowerCase()} listings`
                   : selectedCategories.length > 0
                   ? `Showing ${selectedCategories.join(", ")} listings`
                   : citySearch && radiusKm
@@ -526,13 +582,13 @@ return {
                     </p>
 
                     {item.company_name && item.company_id && (
-  <a
-    href={`/company/${item.company_id}`}
-    className="mt-1 block font-semibold text-blue-600 hover:underline"
-  >
-    {item.company_name}
-  </a>
-)}
+                      <a
+                        href={`/company/${item.company_id}`}
+                        className="mt-1 block font-semibold text-blue-600 hover:underline"
+                      >
+                        {item.company_name}
+                      </a>
+                    )}
 
                     <p className="mt-2 text-slate-700">
                       {item.city}
