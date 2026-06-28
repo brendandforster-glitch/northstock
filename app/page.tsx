@@ -158,6 +158,7 @@ export default function Home() {
             <a href="/listings">Browse Inventory</a>
             <a href="/list-inventory">List Inventory</a>
             <a href="/seller">Seller Dashboard</a>
+            <a href="/help">Help Centre</a>
             <a href="#contact">Contact</a>
           </nav>
 
@@ -194,164 +195,156 @@ export default function Home() {
       </header>
 
       <section className="mx-auto max-w-7xl px-6 py-20">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <div>
-            <p className="mb-4 inline-flex rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-800">
-              Verified members. Commercial inventory. One place.
-            </p>
+  <div className="grid items-center gap-12 lg:grid-cols-2">
+    <div>
+      <p className="mb-4 inline-flex rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-800">
+        Commercial inventory sourcing, buying, and selling across North America.
+      </p>
 
-            <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
-  Source and list commercial inventory across North America.
-</h1>
+      <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
+        Buy direct. Source faster. List commercial inventory for free.
+      </h1>
 
-            <p className="mt-6 max-w-xl text-lg text-slate-600">
-  NorthStock is a free commercial inventory marketplace connecting
-  verified businesses across North America. Built exclusively for
-  commercial kitchen equipment, office furniture, and contractor tools.
-</p>
+      <p className="mt-6 max-w-xl text-lg text-slate-600">
+        NorthStock helps businesses source commercial inventory directly from
+        suppliers, compare availability, and save time.
+      </p>
 
-<p className="mt-4 max-w-xl text-lg text-slate-600">
-  Source inventory, list surplus equipment, and connect directly with
-  buyers and sellers in one refined platform.
-</p>
+      <p className="mt-4 max-w-xl text-lg text-slate-600">
+        Built for office furniture dealers, commercial kitchen equipment
+        suppliers, contractor tool sellers, and buyers looking to move faster
+        across North America.
+      </p>
 
-            <form
-              onSubmit={handleHomepageSearch}
-              className="mt-8 flex flex-col gap-3 sm:flex-row"
+      <form
+        onSubmit={handleHomepageSearch}
+        className="mt-8 flex flex-col gap-3 sm:flex-row"
+      >
+        <input
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search desks, chairs, ovens, prep tables, tools..."
+          className="flex-1 rounded-xl border border-slate-300 bg-white px-5 py-4 text-slate-950 placeholder:text-slate-500"
+        />
+
+        <button
+          type="submit"
+          className="rounded-xl bg-slate-950 px-6 py-4 font-semibold text-white"
+        >
+          Search Inventory
+        </button>
+      </form>
+
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        {loggedIn ? (
+          <>
+            <a
+              href="/listings"
+              className="rounded-xl bg-slate-950 px-6 py-4 text-center font-semibold text-white"
             >
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search inventory by item, brand, model, or SKU..."
-                className="flex-1 rounded-xl border border-slate-300 bg-white px-5 py-4 text-slate-950 placeholder:text-slate-500"
-              />
+              Browse Inventory
+            </a>
 
-              <button
-                type="submit"
-                className="rounded-xl bg-slate-950 px-6 py-4 font-semibold text-white"
+            <a
+              href="/seller"
+              className="rounded-xl border bg-white px-6 py-4 text-center font-semibold text-slate-950"
+            >
+              Seller Dashboard
+            </a>
+          </>
+        ) : (
+          <>
+            <a
+              href="/login"
+              className="rounded-xl bg-slate-950 px-6 py-4 text-center font-semibold text-white"
+            >
+              Create Free Account
+            </a>
+
+            <a
+              href="/listings"
+              className="rounded-xl border bg-white px-6 py-4 text-center font-semibold text-slate-950"
+            >
+              Browse Inventory
+            </a>
+          </>
+        )}
+      </div>
+
+      <div className="mt-8 grid max-w-xl grid-cols-2 gap-4 text-sm font-semibold text-slate-700 md:grid-cols-4">
+        <div>✓ Buy Direct</div>
+        <div>✓ Save Time</div>
+        <div>✓ Compare Suppliers</div>
+        <div>✓ No Seller Fees</div>
+      </div>
+    </div>
+
+    <div className="rounded-3xl border bg-white p-5 shadow-sm">
+      <div className="rounded-2xl bg-slate-100 p-6">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-slate-600">
+            Recently listed inventory
+          </p>
+
+          <a href="/listings" className="text-sm font-bold text-slate-950">
+            View all
+          </a>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          {featuredListings.length > 0 ? (
+            featuredListings.slice(0, 3).map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm"
               >
-                Search
-              </button>
-            </form>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              {loggedIn ? (
-                <>
-                  <a
-                    href="/seller"
-                    className="rounded-xl bg-slate-950 px-6 py-4 text-center font-semibold text-white"
-                  >
-                    Seller Dashboard
-                  </a>
-
-                  <a
-                    href="/listings"
-                    className="rounded-xl border bg-white px-6 py-4 text-center font-semibold text-slate-950"
-                  >
-                    Browse Inventory
-                  </a>
-                </>
-              ) : (
-                <>
-                  <a
-                    href="/login"
-                    className="rounded-xl bg-slate-950 px-6 py-4 text-center font-semibold text-white"
-                  >
-                    Create Free Account
-                  </a>
-
-                  <a
-                    href="/listings"
-                    className="rounded-xl border bg-white px-6 py-4 text-center font-semibold text-slate-950"
-                  >
-                    Browse Inventory
-                  </a>
-                </>
-              )}
-            </div>
-
-            <div className="mt-8 grid max-w-xl grid-cols-2 gap-4 text-sm font-semibold text-slate-700 md:grid-cols-4">
-  <div>✓ Verified Businesses</div>
-  <div>✓ Free Accounts</div>
-  <div>✓ Bulk Excel Uploads</div>
-  <div>✓ No Seller Fees</div>
-</div>
-          </div>
-
-          <div className="rounded-3xl border bg-white p-5 shadow-sm">
-            <div className="rounded-2xl bg-slate-100 p-6">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-600">
-                  Recently listed inventory
-                </p>
+                <div>
+                  <p className="font-semibold">{item.title}</p>
+                  <p className="text-sm text-slate-500">
+                    {item.city}
+                    {item.province ? `, ${item.province}` : ""}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-700">
+                    {formatPrice(item.price, item.price_note)}
+                  </p>
+                </div>
 
                 <a
-                  href="/listings"
-                  className="text-sm font-bold text-slate-950"
+                  href={`/listings/${item.id}`}
+                  className="rounded-lg border px-3 py-2 text-sm"
                 >
-                  View all
+                  View
                 </a>
               </div>
+            ))
+          ) : (
+            <>
+              {[
+                "Herman Miller Aeron Chair",
+                "Stainless Steel Prep Table",
+                "DeWalt 20V Max Drill Set",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm"
+                >
+                  <div>
+                    <p className="font-semibold">{item}</p>
+                    <p className="text-sm text-slate-500">Coming soon</p>
+                  </div>
 
-              <div className="mt-5 space-y-4">
-                {featuredListings.length > 0 ? (
-                  featuredListings.slice(0, 3).map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm"
-                    >
-                      <div>
-                        <p className="font-semibold">{item.title}</p>
-                        <p className="text-sm text-slate-500">
-                          {item.city}
-                          {item.province ? `, ${item.province}` : ""}
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-slate-700">
-                          {formatPrice(item.price, item.price_note)}
-                        </p>
-                      </div>
-
-                      <a
-                        href={`/listings/${item.id}`}
-                        className="rounded-lg border px-3 py-2 text-sm"
-                      >
-                        View
-                      </a>
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    {[
-                      "Herman Miller Aeron Chair",
-                      "Stainless Steel Prep Table",
-                      "DeWalt 20V Max Drill Set",
-                    ].map((item) => (
-                      <div
-                        key={item}
-                        className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm"
-                      >
-                        <div>
-                          <p className="font-semibold">{item}</p>
-                          <p className="text-sm text-slate-500">
-                            Coming soon
-                          </p>
-                        </div>
-
-                        <a
-                          href="/listings"
-                          className="rounded-lg border px-3 py-2 text-sm"
-                        >
-                          View
-                        </a>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+                  <a href="/listings" className="rounded-lg border px-3 py-2 text-sm">
+                    View
+                  </a>
+                </div>
+              ))}
+            </>
+          )}
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
 
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="grid gap-4 md:grid-cols-3">
@@ -370,84 +363,124 @@ export default function Home() {
           </div>
 
           <div className="rounded-3xl border bg-white p-8 shadow-sm">
-            <p className="text-sm font-semibold text-slate-500">
-              Marketplace Categories
-            </p>
-            <h2 className="mt-2 text-4xl font-bold">3</h2>
-          </div>
+  <p className="text-sm font-semibold text-slate-500">
+    Marketplace Coverage
+  </p>
+
+  <h2 className="mt-2 text-4xl font-bold">North America</h2>
+
+  <p className="mt-2 text-slate-600">United States & Canada</p>
+</div>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-6 pb-20">
-        <div className="rounded-3xl border bg-white p-8 shadow-sm">
-          <h2 className="text-3xl font-bold">More Than a Marketplace</h2>
+  <div className="rounded-3xl border bg-white p-10 shadow-sm">
+    <div className="max-w-5xl">
+      <h2 className="text-4xl font-bold">
+        Built for commercial buyers and suppliers.
+      </h2>
 
-          <p className="mt-4 max-w-3xl text-slate-700">
-            NorthStock is a growing network of businesses sourcing, listing,
-            and moving commercial inventory across North America.
-          </p>
+      <p className="mt-5 text-lg text-slate-700">
+        NorthStock is designed specifically for commercial inventory—not
+        consumer classifieds. Whether you're sourcing equipment for a customer,
+        reducing surplus inventory, or expanding your supplier network,
+        NorthStock helps businesses buy and sell more efficiently.
+      </p>
 
-          <p className="mt-3 max-w-3xl text-slate-700">
-            Whether you're clearing warehouse space, searching for equipment,
-            or expanding your inventory channels, NorthStock helps connect
-            buyers and sellers in one dedicated platform.
-          </p>
+      <div className="mt-10 grid gap-8 md:grid-cols-2">
+        <div>
+          <h3 className="text-xl font-bold">
+            For Buyers
+          </h3>
+
+          <ul className="mt-4 space-y-3 text-slate-700">
+            <li>✓ Buy directly from commercial suppliers</li>
+            <li>✓ Save time locating hard-to-find inventory</li>
+            <li>✓ Compare supplier pricing and availability</li>
+            <li>✓ Search across North America</li>
+            <li>✓ Request quotes directly from sellers</li>
+          </ul>
         </div>
-      </section>
+
+        <div>
+          <h3 className="text-xl font-bold">
+            For Sellers
+          </h3>
+
+          <ul className="mt-4 space-y-3 text-slate-700">
+            <li>✓ Reach buyers across North America</li>
+            <li>✓ Receive direct quote requests</li>
+            <li>✓ Create a public company profile</li>
+            <li>✓ Bulk upload inventory using Excel</li>
+            <li>✓ No seller fees during early access</li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="mt-10 rounded-2xl bg-slate-950 p-8 text-white">
+        <h3 className="text-2xl font-bold">
+          Increase margins by buying direct.
+        </h3>
+
+        <p className="mt-3 text-slate-300">
+          Connect directly with commercial suppliers, compare inventory,
+          eliminate unnecessary middlemen, and make purchasing decisions
+          faster—all from one marketplace built exclusively for commercial
+          businesses.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="rounded-3xl border bg-white p-8 shadow-sm">
           <h2 className="text-3xl font-bold">Why NorthStock?</h2>
 
           <div className="mt-8 grid gap-5 md:grid-cols-3">
-            <div className="rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold">Free member accounts</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Create an account, browse inventory, save listings, save
-                searches, and request quotes.
-              </p>
-            </div>
+  <div className="rounded-2xl bg-slate-50 p-6">
+    <h3 className="font-bold">Buy direct from suppliers</h3>
+    <p className="mt-2 text-sm text-slate-600">
+      Connect directly with commercial inventory sellers instead of relying on scattered listings, brokers, or general marketplaces.
+    </p>
+  </div>
 
-            <div className="rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold">No seller fees</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Early sellers can list inventory and receive quote requests
-                without listing fees or seller fees.
-              </p>
-            </div>
+  <div className="rounded-2xl bg-slate-50 p-6">
+    <h3 className="font-bold">Save time sourcing inventory</h3>
+    <p className="mt-2 text-sm text-slate-600">
+      Search across office furniture, kitchen equipment, and contractor tools from one focused commercial marketplace.
+    </p>
+  </div>
 
-            <div className="rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold">New and used inventory</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                List new, used, surplus, refurbished, overstock, or liquidation
-                inventory in one focused marketplace.
-              </p>
-            </div>
+  <div className="rounded-2xl bg-slate-50 p-6">
+    <h3 className="font-bold">Compare pricing and availability</h3>
+    <p className="mt-2 text-sm text-slate-600">
+      Review supplier inventory, pricing notes, locations, and availability before reaching out.
+    </p>
+  </div>
 
-            <div className="rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold">Built for sellers</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Upload individual listings or import inventory in bulk using
-                Excel, then manage everything from your seller dashboard.
-              </p>
-            </div>
+  <div className="rounded-2xl bg-slate-50 p-6">
+    <h3 className="font-bold">No seller fees</h3>
+    <p className="mt-2 text-sm text-slate-600">
+      Sellers can list inventory, receive direct quote requests, and build a public company profile without seller fees.
+    </p>
+  </div>
 
-            <div className="rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold">Search by location</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Buyers can search by item, city, province/state, or radius to
-                find inventory nearby.
-              </p>
-            </div>
+  <div className="rounded-2xl bg-slate-50 p-6">
+    <h3 className="font-bold">Bulk uploads and exports</h3>
+    <p className="mt-2 text-sm text-slate-600">
+      Sellers can upload inventory using Excel and download their current listings anytime with one click.
+    </p>
+  </div>
 
-            <div className="rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold">Company profiles</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Sellers can create public profiles, upload logos, and showcase
-                active inventory in one place.
-              </p>
-            </div>
-          </div>
+  <div className="rounded-2xl bg-slate-50 p-6">
+    <h3 className="font-bold">Built for commercial inventory</h3>
+    <p className="mt-2 text-sm text-slate-600">
+      NorthStock is focused on business inventory, not consumer classifieds, making it easier for commercial buyers and suppliers to connect.
+    </p>
+  </div>
+</div>
         </div>
       </section>
 
@@ -527,37 +560,160 @@ export default function Home() {
           ))}
         </div>
       </section>
+<section className="mx-auto max-w-7xl px-6 pb-20">
+  <div className="rounded-3xl border bg-white p-8 shadow-sm">
+    <h2 className="text-3xl font-bold">How NorthStock Works</h2>
 
-      <section className="mx-auto max-w-7xl px-6 pb-20">
-        <div className="grid gap-6 rounded-3xl border bg-slate-950 p-8 text-white shadow-sm md:grid-cols-2 md:items-center">
-          <div>
-            <h2 className="text-3xl font-bold">
-              Have commercial inventory to sell?
-            </h2>
+    <div className="mt-8 grid gap-6 md:grid-cols-3">
+      <div className="rounded-2xl bg-slate-50 p-6">
+        <p className="text-sm font-bold text-slate-500">Step 1</p>
+        <h3 className="mt-2 text-xl font-bold">Create Your Free Account</h3>
+        <p className="mt-3 text-sm text-slate-600">
+          Sign up as a buyer, seller, or both and create your NorthStock profile.
+        </p>
+      </div>
 
-            <p className="mt-3 text-slate-300">
-              Create a free seller account, upload new or used inventory, and
-              start receiving quote requests from buyers across North America.
-            </p>
-          </div>
+      <div className="rounded-2xl bg-slate-50 p-6">
+        <p className="text-sm font-bold text-slate-500">Step 2</p>
+        <h3 className="mt-2 text-xl font-bold">Upload or Source Inventory</h3>
+        <p className="mt-3 text-sm text-slate-600">
+          Sellers can add listings one by one or upload inventory in bulk using Excel.
+          Buyers can search by item, city, region, condition, or radius.
+        </p>
+      </div>
 
-          <div className="flex flex-col gap-3 md:items-end">
-            <a
-              href="/list-inventory"
-              className="rounded-xl bg-white px-6 py-4 text-center font-semibold text-slate-950"
-            >
-              List Inventory
-            </a>
+      <div className="rounded-2xl bg-slate-50 p-6">
+        <p className="text-sm font-bold text-slate-500">Step 3</p>
+        <h3 className="mt-2 text-xl font-bold">Connect Directly</h3>
+        <p className="mt-3 text-sm text-slate-600">
+          Buyers send quote requests directly to sellers, helping both sides
+  move faster, compare supplier options, and reduce unnecessary
+  middlemen.
+        </p>
+      </div>
+    </div>
+  </div>
+<section className="mx-auto max-w-7xl px-6 pb-20">
+  <div className="rounded-3xl border bg-white p-8 shadow-sm">
+    <div className="mx-auto max-w-3xl text-center">
+      <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
+        Simple onboarding
+      </p>
 
-            <a
-              href="/seller"
-              className="rounded-xl border border-white/30 px-6 py-4 text-center font-semibold text-white"
-            >
-              Seller Dashboard
-            </a>
-          </div>
+      <h2 className="mt-3 text-3xl font-bold md:text-4xl">
+        How NorthStock Works
+      </h2>
+
+      <p className="mt-4 text-slate-700">
+        Create an account, add or source inventory, and connect directly with
+        commercial buyers and suppliers across North America.
+      </p>
+    </div>
+
+    <div className="mt-10 grid gap-6 md:grid-cols-3">
+      <div className="relative rounded-3xl border border-slate-200 bg-slate-50 p-7">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-2xl font-bold text-white">
+          1
         </div>
-      </section>
+
+        <h3 className="mt-6 text-xl font-bold">Create Your Free Account</h3>
+
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          Sign up as a buyer, seller, or both. Sellers can create a public
+          company profile and showcase their business.
+        </p>
+      </div>
+
+      <div className="relative rounded-3xl border border-slate-200 bg-slate-50 p-7">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-2xl font-bold text-white">
+          2
+        </div>
+
+        <h3 className="mt-6 text-xl font-bold">Upload or Source Inventory</h3>
+
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          Sellers can add listings individually or upload inventory in bulk
+          using Excel. Buyers can search by item, category, location,
+          condition, or radius.
+        </p>
+      </div>
+
+      <div className="relative rounded-3xl border border-slate-200 bg-slate-50 p-7">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-2xl font-bold text-white">
+          3
+        </div>
+
+        <h3 className="mt-6 text-xl font-bold">Connect Directly</h3>
+
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          Buyers send quote requests directly to sellers, helping both sides
+          move faster, compare options, and reduce unnecessary middlemen.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+</section>
+      <section className="mx-auto max-w-7xl px-6 pb-20">
+  <div className="rounded-3xl border bg-slate-950 p-8 text-white shadow-sm">
+    <div className="mx-auto max-w-3xl text-center">
+      <h2 className="text-3xl font-bold md:text-4xl">
+        Ready to use NorthStock?
+      </h2>
+
+      <p className="mt-4 text-slate-300">
+        Whether you're sourcing commercial inventory or listing equipment for sale,
+        NorthStock gives buyers and sellers a focused place to connect directly.
+      </p>
+    </div>
+
+    <div className="mt-10 grid gap-6 md:grid-cols-2">
+      <div className="rounded-3xl border border-white/10 bg-white p-7 text-slate-950">
+        <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
+          For Buyers
+        </p>
+
+        <h3 className="mt-3 text-2xl font-bold">Find inventory faster</h3>
+
+        <ul className="mt-5 space-y-3 text-sm text-slate-700">
+          <li>✓ Browse commercial suppliers across North America</li>
+          <li>✓ Compare pricing, availability, and location</li>
+          <li>✓ Search by item, condition, city, province/state, or radius</li>
+          <li>✓ Request quotes directly from sellers</li>
+        </ul>
+
+        <a
+          href="/listings"
+          className="mt-7 inline-block rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white"
+        >
+          Browse Inventory
+        </a>
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-white p-7 text-slate-950">
+        <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
+          For Sellers
+        </p>
+
+        <h3 className="mt-3 text-2xl font-bold">List inventory for free</h3>
+
+        <ul className="mt-5 space-y-3 text-sm text-slate-700">
+          <li>✓ Create a public company profile</li>
+          <li>✓ Upload listings one by one or in bulk with Excel</li>
+          <li>✓ Receive direct quote requests from buyers</li>
+          <li>✓ Export your inventory anytime</li>
+        </ul>
+
+        <a
+          href="/list-inventory"
+          className="mt-7 inline-block rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white"
+        >
+          List Inventory
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
 
       <footer id="contact" className="border-t bg-white">
         <div className="mx-auto max-w-7xl px-6 py-12">
@@ -624,6 +780,10 @@ export default function Home() {
                 <p>
                   <a href="/saved-listings">Saved Listings</a>
                 </p>
+
+                <p>
+  <a href="/help">Help Centre</a>
+</p>
               </div>
             </div>
 
