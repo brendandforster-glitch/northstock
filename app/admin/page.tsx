@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import ExecutiveOverview from "../components/admin/ExecutiveOverview";
+import MarketplaceGrowth from "../components/admin/MarketplaceGrowth";
+import RecentMarketplaceActivity from "../components/admin/RecentMarketplaceActivity";
+import MarketplaceHealth from "../components/admin/MarketplaceHealth";
 
 type Lead = {
   id: string;
@@ -14,6 +18,28 @@ type Lead = {
 
 type ListingQuantity = {
   quantity: number | null;
+};
+type DashboardData = {
+  stats: {
+    companies: number;
+    users: number;
+    activeListings: number;
+    quoteRequests: number;
+    savedSearches: number;
+    alertsSent: number;
+    newsletterSubscribers: number;
+    todaysListings: number;
+  };
+  growth: {
+    companiesThisMonth: number;
+    listingsThisMonth: number;
+    quoteRequestsThisMonth: number;
+  };
+  recent: {
+    companies: any[];
+    listings: any[];
+    quoteRequests: any[];
+  };
 };
 
 function formatDate(dateString: string | null) {
@@ -41,6 +67,7 @@ export default function AdminPage() {
   const [pendingInviteCount, setPendingInviteCount] = useState(0);
   const [acceptedInviteCount, setAcceptedInviteCount] = useState(0);
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
     loadAdminData();
@@ -65,6 +92,26 @@ export default function AdminPage() {
     }
 
     setAuthorized(true);
+    const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+if (session?.access_token) {
+  const response = await fetch("/api/admin/dashboard", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      accessToken: session.access_token,
+    }),
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    setDashboardData(data);
+  }
+}
 
     const now = new Date().toISOString();
 
@@ -209,20 +256,29 @@ export default function AdminPage() {
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <section className="mx-auto max-w-7xl px-6 py-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-            <p className="mt-2 text-slate-700">
-              NorthStock marketplace overview and admin controls.
-            </p>
-          </div>
+  <div>
+    <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+    <p className="mt-2 text-slate-700">
+      NorthStock marketplace overview and admin controls.
+    </p>
+  </div>
 
-          <a
-            href="/"
-            className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-950"
-          >
-            Back to Home
-          </a>
-        </div>
+  <a
+    href="/"
+    className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-950"
+  >
+    Back to Home
+  </a>
+</div>
+
+{dashboardData && (
+  <>
+    <ExecutiveOverview stats={dashboardData.stats} />
+    <MarketplaceGrowth growth={dashboardData.growth} />
+    <MarketplaceHealth stats={dashboardData.stats} />
+    <RecentMarketplaceActivity recent={dashboardData.recent} />
+  </>
+)}
 
         <div className="mt-8 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           <div className="rounded-3xl border bg-white p-6 shadow-sm">

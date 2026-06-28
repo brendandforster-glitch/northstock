@@ -132,7 +132,47 @@ export default function AdminEmailPage() {
     alert(testOnly ? "Test email sent." : "Campaign sent.");
     loadPage();
   }
+async function runSavedSearchAlerts() {
+  const confirmed = confirm(
+    "Run saved search email alerts now? This may send emails to users with matching saved searches."
+  );
 
+  if (!confirmed) return;
+
+  setSending(true);
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    window.location.href = "/login";
+    return;
+  }
+
+  const response = await fetch("/api/admin/send-saved-search-alerts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      accessToken: session.access_token,
+    }),
+  });
+
+  const result = await response.json();
+
+  setSending(false);
+
+  if (!response.ok) {
+    alert(result.error || "Saved search alerts failed.");
+    return;
+  }
+
+  alert(
+    `Saved search alerts complete.\n\nSearches checked: ${result.searches_checked}\nListings checked: ${result.listings_checked}\nMatches found: ${result.matches_found}\nAlerts sent: ${result.alerts_sent}`
+  );
+}
   if (loading) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] p-10">
@@ -241,6 +281,13 @@ export default function AdminEmailPage() {
                 >
                   {sending ? "Sending..." : "Send Campaign"}
                 </button>
+                <button
+  onClick={runSavedSearchAlerts}
+  disabled={sending}
+  className="rounded-xl bg-blue-600 px-5 py-4 font-semibold text-white disabled:opacity-50"
+>
+  Run Saved Search Alerts
+</button>
               </div>
             </div>
           </div>
