@@ -1,10 +1,10 @@
 "use client";
 
+import { CATEGORIES } from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import * as XLSX from "xlsx";
 
-const categories = ["Office Furniture", "Restaurant Equipment", "Contractor Tools"];
 
 const regions = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
@@ -142,7 +142,7 @@ export default function ListInventoryPage() {
         rowNumber: index + 2,
         category: getRowCategory(row),
       }))
-      .filter((row) => !categories.includes(row.category));
+      .filter((row) => !CATEGORIES.includes(row.category));
 
     return invalidRows;
   };
@@ -388,13 +388,21 @@ export default function ListInventoryPage() {
     }
 
     const invalidRows = validateExcelCategories(excelRows);
+    
+    const allowedCategories = CATEGORIES.map((c) => `- ${c}`).join("\n");
 
     if (invalidRows.length > 0) {
       alert(
-        `Invalid category detected.\n\nAllowed categories:\n- Office Furniture\n- Restaurant Equipment\n- Contractor Tools\n\nInvalid rows:\n${invalidRows
-          .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
-          .join("\n")}`
-      );
+  `Invalid category detected.
+
+Allowed categories:
+${allowedCategories}
+
+Invalid rows:
+${invalidRows
+  .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
+  .join("\n")}`
+);
       return;
     }
 
@@ -432,13 +440,20 @@ export default function ListInventoryPage() {
     }
 
     const invalidRows = validateExcelCategories(excelRows);
+    const allowedCategories = CATEGORIES.map((c) => `- ${c}`).join("\n");
 
     if (invalidRows.length > 0) {
       alert(
-        `Invalid category detected.\n\nAllowed categories:\n- Office Furniture\n- Restaurant Equipment\n- Contractor Tools\n\nInvalid rows:\n${invalidRows
-          .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
-          .join("\n")}`
-      );
+  `Invalid category detected.
+
+Allowed categories:
+${allowedCategories}
+
+Invalid rows:
+${invalidRows
+  .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
+  .join("\n")}`
+);
       return;
     }
 
@@ -521,7 +536,7 @@ export default function ListInventoryPage() {
 
             <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-xl border border-slate-300 p-4 text-slate-950">
               <option value="">Select Category *</option>
-              {categories.map((item) => <option key={item}>{item}</option>)}
+              {CATEGORIES.map((item) => <option key={item}>{item}</option>)}
             </select>
 
             <input value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantity *" type="number" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
@@ -621,7 +636,7 @@ export default function ListInventoryPage() {
 
           <p className="mt-3 text-slate-800">
             Upload multiple listings at once using the NorthStock Excel template.
-            Your category values must match exactly: Office Furniture, Restaurant Equipment, or Contractor Tools.
+            Your category values must match exactly: Office Furniture, or Restaurant Equipment.
           </p>
 
           <p className="mt-3 text-sm font-semibold text-slate-700">
@@ -708,7 +723,7 @@ export default function ListInventoryPage() {
 
             <select value={requestCategory} onChange={(e) => setRequestCategory(e.target.value)} className="w-full rounded-xl border border-slate-300 p-4 text-slate-950">
               <option value="">Select Category</option>
-              {categories.map((item) => <option key={item}>{item}</option>)}
+              {CATEGORIES.map((item) => <option key={item}>{item}</option>)}
             </select>
 
             <select value={inventorySize} onChange={(e) => setInventorySize(e.target.value)} className="w-full rounded-xl border border-slate-300 p-4 text-slate-950">

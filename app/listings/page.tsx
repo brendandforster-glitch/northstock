@@ -1,5 +1,6 @@
 "use client";
 
+import { CATEGORIES } from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -27,7 +28,6 @@ type Listing = {
   company_id?: string;
 };
 
-const categories = ["Office Furniture", "Restaurant Equipment", "Contractor Tools"];
 const conditions = ["New", "Used", "Refurbished"];
 
 const regions = [
@@ -433,7 +433,7 @@ export default function ListingsPage() {
               </p>
 
               <div className="space-y-2 text-sm text-slate-700">
-                {categories.map((category) => (
+                {CATEGORIES.map((category) => (
                   <label
                     key={category}
                     className="flex items-center gap-2 text-slate-800"

@@ -1,5 +1,6 @@
 "use client";
 
+import { CATEGORY_DETAILS } from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -14,20 +15,7 @@ type FeaturedListing = {
   image_url: string | null;
 };
 
-const categories = [
-  {
-    title: "Office Furniture",
-    description: "Chairs, desks, workstations, filing cabinets and more.",
-  },
-  {
-    title: "Restaurant Equipment",
-    description: "Prep tables, refrigeration, ovens, sinks and more.",
-  },
-  {
-    title: "Contractor Tools",
-    description: "Power tools, compressors, generators and jobsite equipment.",
-  },
-];
+
 
 function formatPrice(price: number | null, priceNote?: string | null) {
   if (priceNote) return priceNote;
@@ -547,7 +535,7 @@ export default function Home() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          {categories.map((category) => (
+          {CATEGORY_DETAILS.map((category) => (
             <a
               href="/listings"
               key={category.title}
