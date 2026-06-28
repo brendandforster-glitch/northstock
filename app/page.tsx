@@ -199,9 +199,7 @@ export default function Home() {
       </p>
 
       <p className="mt-4 max-w-xl text-lg text-slate-600">
-        Built for office furniture dealers, commercial kitchen equipment
-        suppliers, contractor tool sellers, and buyers looking to move faster
-        across North America.
+        Built for commercial furniture and equipment suppliers across North America.
       </p>
 
       <form
@@ -211,7 +209,7 @@ export default function Home() {
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search desks, chairs, ovens, prep tables, tools..."
+          placeholder="Search desks, chairs, prep tables, refrigeration..."
           className="flex-1 rounded-xl border border-slate-300 bg-white px-5 py-4 text-slate-950 placeholder:text-slate-500"
         />
 
@@ -437,7 +435,7 @@ export default function Home() {
   <div className="rounded-2xl bg-slate-50 p-6">
     <h3 className="font-bold">Save time sourcing inventory</h3>
     <p className="mt-2 text-sm text-slate-600">
-      Search across office furniture, kitchen equipment, and contractor tools from one focused commercial marketplace.
+      Search across office furniture and restaurant equipment from one focused commercial marketplace.
     </p>
   </div>
 
@@ -548,39 +546,7 @@ export default function Home() {
           ))}
         </div>
       </section>
-<section className="mx-auto max-w-7xl px-6 pb-20">
-  <div className="rounded-3xl border bg-white p-8 shadow-sm">
-    <h2 className="text-3xl font-bold">How NorthStock Works</h2>
 
-    <div className="mt-8 grid gap-6 md:grid-cols-3">
-      <div className="rounded-2xl bg-slate-50 p-6">
-        <p className="text-sm font-bold text-slate-500">Step 1</p>
-        <h3 className="mt-2 text-xl font-bold">Create Your Free Account</h3>
-        <p className="mt-3 text-sm text-slate-600">
-          Sign up as a buyer, seller, or both and create your NorthStock profile.
-        </p>
-      </div>
-
-      <div className="rounded-2xl bg-slate-50 p-6">
-        <p className="text-sm font-bold text-slate-500">Step 2</p>
-        <h3 className="mt-2 text-xl font-bold">Upload or Source Inventory</h3>
-        <p className="mt-3 text-sm text-slate-600">
-          Sellers can add listings one by one or upload inventory in bulk using Excel.
-          Buyers can search by item, city, region, condition, or radius.
-        </p>
-      </div>
-
-      <div className="rounded-2xl bg-slate-50 p-6">
-        <p className="text-sm font-bold text-slate-500">Step 3</p>
-        <h3 className="mt-2 text-xl font-bold">Connect Directly</h3>
-        <p className="mt-3 text-sm text-slate-600">
-          Buyers send quote requests directly to sellers, helping both sides
-  move faster, compare supplier options, and reduce unnecessary
-  middlemen.
-        </p>
-      </div>
-    </div>
-  </div>
 <section className="mx-auto max-w-7xl px-6 pb-20">
   <div className="rounded-3xl border bg-white p-8 shadow-sm">
     <div className="mx-auto max-w-3xl text-center">
@@ -641,7 +607,7 @@ export default function Home() {
     </div>
   </div>
 </section>
-</section>
+
       <section className="mx-auto max-w-7xl px-6 pb-20">
   <div className="rounded-3xl border bg-slate-950 p-8 text-white shadow-sm">
     <div className="mx-auto max-w-3xl text-center">

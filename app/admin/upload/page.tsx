@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import * as XLSX from "xlsx";
+import { CATEGORIES } from "@/lib/categories";
 
-const categories = ["Office Furniture", "Restaurant Equipment", "Contractor Tools"];
 
 type Company = {
   id: string;
@@ -97,7 +97,7 @@ export default function AdminUploadPage() {
         rowNumber: index + 2,
         category: getRowCategory(row),
       }))
-      .filter((row) => !categories.includes(row.category));
+      .filter((row) => !CATEGORIES.includes(row.category));
   }
 
   async function formatExcelRows(rows: any[], sellerUserId: string) {
@@ -202,13 +202,20 @@ export default function AdminUploadPage() {
     }
 
     const invalidRows = validateExcelCategories(excelRows);
+    const allowedCategories = CATEGORIES.map((c) => `- ${c}`).join("\n");
 
     if (invalidRows.length > 0) {
       alert(
-        `Invalid category detected.\n\nAllowed categories:\n- Office Furniture\n- Restaurant Equipment\n- Contractor Tools\n\nInvalid rows:\n${invalidRows
-          .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
-          .join("\n")}`
-      );
+  `Invalid category detected.
+
+Allowed categories:
+${allowedCategories}
+
+Invalid rows:
+${invalidRows
+  .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
+  .join("\n")}`
+);
       return;
     }
 
@@ -249,13 +256,20 @@ export default function AdminUploadPage() {
     }
 
     const invalidRows = validateExcelCategories(excelRows);
+    const allowedCategories = CATEGORIES.map((c) => `- ${c}`).join("\n");
 
     if (invalidRows.length > 0) {
       alert(
-        `Invalid category detected.\n\nAllowed categories:\n- Office Furniture\n- Restaurant Equipment\n- Contractor Tools\n\nInvalid rows:\n${invalidRows
-          .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
-          .join("\n")}`
-      );
+  `Invalid category detected.
+
+Allowed categories:
+${allowedCategories}
+
+Invalid rows:
+${invalidRows
+  .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
+  .join("\n")}`
+);
       return;
     }
 

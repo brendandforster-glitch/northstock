@@ -2,8 +2,8 @@
 
 import { use, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { CATEGORIES } from "@/lib/categories";
 
-const categories = ["Office Furniture", "Restaurant Equipment", "Contractor Tools"];
 
 const regions = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
@@ -229,7 +229,7 @@ export default function EditListingPage({
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
           >
             <option value="">Select Category *</option>
-            {categories.map((item) => (
+            {CATEGORIES.map((item) => (
               <option key={item}>{item}</option>
             ))}
           </select>
