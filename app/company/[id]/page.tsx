@@ -15,6 +15,7 @@ type Company = {
   city: string | null;
   province: string | null;
   logo_url: string | null;
+  banner_url: string | null;
   created_at: string | null;
 };
 
@@ -144,7 +145,16 @@ export default function CompanyProfilePage({
         </a>
 
         <div className="mt-6 overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-sm">
-          <div className="h-40 bg-slate-950" />
+          <div
+  className="h-40 bg-slate-950 bg-cover bg-center"
+  style={
+    company.banner_url
+      ? {
+          backgroundImage: `url(${company.banner_url})`,
+        }
+      : undefined
+  }
+/>
 
           <div className="p-8">
             <div className="-mt-20 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -164,9 +174,15 @@ export default function CompanyProfilePage({
                 </div>
 
                 <div>
-                  <div className="mb-3 inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
-                    Verified supplier ready
-                  </div>
+                  <div className="mb-3 flex flex-wrap gap-2">
+  <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
+    Early Supplier
+  </span>
+
+  <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700">
+    Member since {formatDate(company.created_at)}
+  </span>
+</div>
 
                   <h1 className="text-4xl font-bold">
                     {company.company_name}
@@ -191,13 +207,10 @@ export default function CompanyProfilePage({
                 )}
 
                 {company.email && (
-                  <a
-                    href={`mailto:${company.email}`}
-                    className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-center font-semibold text-slate-950"
-                  >
-                    Contact Company
-                  </a>
-                )}
+  <div className="rounded-xl bg-slate-950 px-5 py-3 text-center font-semibold text-white">
+    {company.email}
+  </div>
+)}
               </div>
             </div>
 
@@ -254,32 +267,50 @@ export default function CompanyProfilePage({
                 {newestListings.length > 0 ? (
                   newestListings.map((item) => (
                     <a
-                      key={item.id}
-                      href={`/listings/${item.id}`}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4 hover:border-slate-500"
-                    >
-                      <div className="flex h-32 items-center justify-center rounded-xl bg-white text-sm text-slate-500">
-                        {item.image_url ? (
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            className="h-full w-full object-contain p-2"
-                          />
-                        ) : (
-                          "Image"
-                        )}
-                      </div>
+  key={item.id}
+  href={`/listings/${item.id}`}
+  className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:border-slate-500"
+>
+  <div className="flex h-40 items-center justify-center bg-slate-100 text-sm text-slate-500">
+    {item.image_url ? (
+      <img
+        src={item.image_url}
+        alt={item.title}
+        className="h-full w-full object-contain p-3"
+      />
+    ) : (
+      "Image"
+    )}
+  </div>
 
-                      <p className="mt-4 text-sm font-semibold text-slate-500">
-                        {item.category}
-                      </p>
+  <div className="p-4">
+    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+      {item.category}
+    </p>
 
-                      <h3 className="mt-1 font-bold">{item.title}</h3>
+    <h3 className="mt-2 line-clamp-2 font-bold text-slate-950">
+      {item.title}
+    </h3>
 
-                      <p className="mt-2 text-sm font-semibold">
-                        {formatPrice(item.price, item.price_note)}
-                      </p>
-                    </a>
+    <p className="mt-2 font-bold text-slate-950">
+      {formatPrice(item.price, item.price_note)}
+    </p>
+
+    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+      {item.condition && (
+        <span className="rounded-full bg-slate-100 px-3 py-1">
+          {item.condition}
+        </span>
+      )}
+
+      {item.quantity !== null && (
+        <span className="rounded-full bg-slate-100 px-3 py-1">
+          Qty: {item.quantity}
+        </span>
+      )}
+    </div>
+  </div>
+</a>
                   ))
                 ) : (
                   <div className="rounded-2xl border border-slate-300 bg-slate-50 p-6 text-slate-700 md:col-span-3">
@@ -296,55 +327,55 @@ export default function CompanyProfilePage({
                 {listings.length > 0 ? (
                   listings.map((item) => (
                     <a
-                      key={item.id}
-                      href={`/listings/${item.id}`}
-                      className="grid gap-4 rounded-2xl border border-slate-300 bg-white p-5 hover:border-slate-500 md:grid-cols-[120px_1fr_auto]"
-                    >
-                      <div className="flex h-24 items-center justify-center rounded-xl bg-slate-100 text-sm text-slate-500">
-                        {item.image_url ? (
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            className="h-full w-full object-contain p-2"
-                          />
-                        ) : (
-                          "Image"
-                        )}
-                      </div>
+  key={item.id}
+  href={`/listings/${item.id}`}
+  className="grid gap-5 rounded-2xl border border-slate-300 bg-white p-5 shadow-sm hover:border-slate-500 md:grid-cols-[150px_1fr_auto]"
+>
+  <div className="flex h-32 items-center justify-center rounded-xl bg-slate-100 text-sm text-slate-500">
+    {item.image_url ? (
+      <img
+        src={item.image_url}
+        alt={item.title}
+        className="h-full w-full object-contain p-2"
+      />
+    ) : (
+      "Image"
+    )}
+  </div>
 
-                      <div>
-                        <p className="text-sm text-slate-500">
-                          {item.category}
-                        </p>
+  <div>
+    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+      {item.category}
+    </p>
 
-                        <h3 className="mt-1 text-xl font-bold">
-                          {item.title}
-                        </h3>
+    <h3 className="mt-1 text-xl font-bold text-slate-950">
+      {item.title}
+    </h3>
 
-                        <p className="mt-1 text-slate-600">
-                          {item.city}
-                          {item.province ? `, ${item.province}` : ""}
-                        </p>
+    <p className="mt-2 text-slate-600">
+      {item.city}
+      {item.province ? `, ${item.province}` : ""}
+    </p>
 
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
-                          {item.condition && (
-                            <span className="rounded-full bg-slate-100 px-3 py-1">
-                              {item.condition}
-                            </span>
-                          )}
+    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+      {item.condition && (
+        <span className="rounded-full bg-slate-100 px-3 py-1">
+          {item.condition}
+        </span>
+      )}
 
-                          {item.quantity !== null && (
-                            <span className="rounded-full bg-slate-100 px-3 py-1">
-                              Qty: {item.quantity}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+      {item.quantity !== null && (
+        <span className="rounded-full bg-slate-100 px-3 py-1">
+          Qty: {item.quantity}
+        </span>
+      )}
+    </div>
+  </div>
 
-                      <div className="font-bold">
-                        {formatPrice(item.price, item.price_note)}
-                      </div>
-                    </a>
+  <div className="text-lg font-bold text-slate-950">
+    {formatPrice(item.price, item.price_note)}
+  </div>
+</a>
                   ))
                 ) : (
                   <div className="rounded-2xl border border-slate-300 bg-white p-6 text-slate-700">
@@ -359,44 +390,59 @@ export default function CompanyProfilePage({
             <section className="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-bold">Contact Information</h2>
 
-              <div className="mt-5 space-y-3 text-slate-700">
-                {company.website && (
-                  <p>
-                    🌐{" "}
-                    <a
-                      href={company.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-blue-600 hover:underline"
-                    >
-                      Website
-                    </a>
-                  </p>
-                )}
+              <div className="mt-5 space-y-3">
+  {company.website && (
+    <a
+      href={company.website}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block rounded-xl border border-slate-300 bg-white px-4 py-3 text-center font-semibold text-slate-950 hover:border-slate-500"
+    >
+      🌐 Visit Website
+    </a>
+  )}
 
-                {company.phone && <p>📞 {company.phone}</p>}
-                {company.email && <p>✉️ {company.email}</p>}
-                {location && <p>📍 {location}</p>}
-              </div>
+  {company.email && (
+  <div className="rounded-xl border border-slate-300 bg-white px-4 py-3">
+    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      Email
+    </p>
+    <p className="mt-1 font-semibold text-slate-950">
+      {company.email}
+    </p>
+  </div>
+)}
+
+{company.phone && (
+  <div className="rounded-xl border border-slate-300 bg-white px-4 py-3">
+    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      Phone
+    </p>
+    <p className="mt-1 font-semibold text-slate-950">
+      {company.phone}
+    </p>
+  </div>
+)}
+
+  {location && (
+    <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+      📍 {location}
+    </div>
+  )}
+</div>
             </section>
 
             <section className="rounded-3xl border border-slate-300 bg-slate-950 p-6 text-white shadow-sm">
-              <h2 className="text-xl font-bold">Interested in this supplier?</h2>
+  <h2 className="text-xl font-bold">
+    Interested in this supplier?
+  </h2>
 
-              <p className="mt-3 text-sm text-slate-300">
-                Browse their active inventory or contact them directly to discuss
-                availability, pricing, and sourcing options.
-              </p>
-
-              {company.email && (
-                <a
-                  href={`mailto:${company.email}`}
-                  className="mt-5 block rounded-xl bg-white px-5 py-3 text-center font-semibold text-slate-950"
-                >
-                  Contact Supplier
-                </a>
-              )}
-            </section>
+  <p className="mt-3 leading-7 text-slate-300">
+    Browse this supplier's active inventory, visit their website, or use the
+    contact information above to discuss availability, pricing, or sourcing
+    opportunities.
+  </p>
+</section>
           </aside>
         </div>
       </section>
