@@ -686,30 +686,45 @@ export default function Home() {
             </div>
 
             <div>
-              <h3 className="font-bold">Contact Us</h3>
+  <h3 className="font-bold">Contact Us</h3>
 
-              <div className="mt-3 space-y-2 text-sm text-slate-600">
-                <p>
-                  Email:{" "}
-                  <a
-                    href="mailto:info@northstock.ca"
-                    className="font-semibold text-slate-700"
-                  >
-                    info@northstock.ca
-                  </a>
-                </p>
+  <div className="mt-3 space-y-2 text-sm text-slate-600">
+    <p>
+      Email:{" "}
+      <a
+        href="mailto:info@northstock.ca"
+        className="font-semibold text-slate-700 hover:underline"
+      >
+        info@northstock.ca
+      </a>
+    </p>
 
-                <p>
-                  Phone:{" "}
-                  <a
-                    href="tel:6132814203"
-                    className="font-semibold text-slate-700"
-                  >
-                    613-281-4203
-                  </a>
-                </p>
-              </div>
-            </div>
+    <p>
+      Phone:{" "}
+      <a
+        href="tel:6132814203"
+        className="font-semibold text-slate-700 hover:underline"
+      >
+        613-281-4203
+      </a>
+    </p>
+  </div>
+
+  <h3 className="mt-6 font-bold">Follow NorthStock</h3>
+
+  <div className="mt-3 space-y-2 text-sm text-slate-600">
+    <p>
+      <a
+        href="https://www.facebook.com/profile.php?id=61591319321002"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-semibold text-slate-700 hover:underline"
+      >
+        👍 Facebook
+      </a>
+    </p>
+  </div>
+</div>
 
             <div>
               <h3 className="font-bold">Marketplace</h3>
