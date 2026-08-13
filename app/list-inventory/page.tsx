@@ -4,6 +4,7 @@ import { CATEGORIES } from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 
 const regions = [
@@ -199,32 +200,348 @@ export default function ListInventoryPage() {
     return formattedRows;
   };
 
-  const downloadExcelTemplate = () => {
-    const template = [
-      {
-        title: "Example Office Chair",
-        category: "Office Furniture",
-        description: "Used ergonomic office chair in good condition.",
-        quantity: 10,
-        city: "Vancouver",
-        province: "British Columbia",
-        price: 100,
-        price_note: "$100 each or bulk pricing available",
-        condition: "Used",
-        brand: "Herman Miller",
-        model: "Aeron",
-        sku: "CHAIR-001",
-        image_url: "https://example.com/image.jpg",
-        expires_at: "",
+  const downloadExcelTemplate = async () => {
+  const workbook = new ExcelJS.Workbook();
+
+  workbook.creator = "NorthStock";
+  workbook.company = "NorthStock";
+  workbook.subject = "Commercial Inventory Upload Template";
+  workbook.title = "NorthStock Inventory Template";
+  workbook.created = new Date();
+
+  const inventorySheet = workbook.addWorksheet("Inventory Template", {
+    views: [{ state: "frozen", ySplit: 1 }],
+  });
+
+  const categorySheet = workbook.addWorksheet("Allowed Categories", {
+    views: [{ state: "frozen", ySplit: 1 }],
+  });
+
+  const instructionsSheet = workbook.addWorksheet("Instructions", {
+    views: [{ state: "frozen", ySplit: 1 }],
+  });
+
+  inventorySheet.columns = [
+    { header: "title", key: "title", width: 34 },
+    { header: "category", key: "category", width: 30 },
+    { header: "description", key: "description", width: 48 },
+    { header: "quantity", key: "quantity", width: 12 },
+    { header: "city", key: "city", width: 20 },
+    { header: "province", key: "province", width: 24 },
+    { header: "price", key: "price", width: 14 },
+    { header: "price_note", key: "price_note", width: 34 },
+    { header: "condition", key: "condition", width: 14 },
+    { header: "brand", key: "brand", width: 20 },
+    { header: "model", key: "model", width: 18 },
+    { header: "sku", key: "sku", width: 18 },
+    { header: "image_url", key: "image_url", width: 45 },
+    { header: "expires_at", key: "expires_at", width: 18 },
+  ];
+
+  const examples = [
+    {
+      title: "Example Office Chair",
+      category: "Office Furniture",
+      description: "Used ergonomic office chair in good condition.",
+      quantity: 10,
+      city: "Vancouver",
+      province: "British Columbia",
+      price: 100,
+      price_note: "$100 each or bulk pricing available",
+      condition: "Used",
+      brand: "Herman Miller",
+      model: "Aeron",
+      sku: "CHAIR-001",
+      image_url: "https://example.com/image.jpg",
+      expires_at: "",
+    },
+    {
+      title: "Example Commercial Range",
+      category: "Restaurant Equipment",
+      description: "Six-burner commercial gas range.",
+      quantity: 2,
+      city: "Toronto",
+      province: "Ontario",
+      price: 3500,
+      price_note: "",
+      condition: "Used",
+      brand: "Example Brand",
+      model: "RANGE-36",
+      sku: "RANGE-001",
+      image_url: "",
+      expires_at: "",
+    },
+    {
+      title: "Example Hotel Nightstand",
+      category: "Hotel Supplies",
+      description: "Commercial-grade guest-room nightstand.",
+      quantity: 40,
+      city: "Calgary",
+      province: "Alberta",
+      price: 125,
+      price_note: "Volume pricing available",
+      condition: "New",
+      brand: "Example Brand",
+      model: "NS-100",
+      sku: "HOTEL-001",
+      image_url: "",
+      expires_at: "",
+    },
+    {
+      title: "Example Commercial Treadmill",
+      category: "Commercial Gym Equipment",
+      description: "Commercial treadmill in working condition.",
+      quantity: 4,
+      city: "Seattle",
+      province: "Washington",
+      price: 2200,
+      price_note: "",
+      condition: "Used",
+      brand: "Example Fitness",
+      model: "T-900",
+      sku: "GYM-001",
+      image_url: "",
+      expires_at: "",
+    },
+  ];
+
+  inventorySheet.addRows(examples);
+  inventorySheet.autoFilter = "A1:N1";
+  inventorySheet.getRow(1).height = 30;
+
+  inventorySheet.getRow(1).eachCell((cell) => {
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF020617" },
+    };
+
+    cell.font = {
+      bold: true,
+      color: { argb: "FFFFFFFF" },
+      size: 11,
+    };
+
+    cell.alignment = {
+      vertical: "middle",
+      horizontal: "center",
+    };
+
+    cell.border = {
+      bottom: {
+        style: "medium",
+        color: { argb: "FF2563EB" },
       },
-    ];
+    };
+  });
 
-    const worksheet = XLSX.utils.json_to_sheet(template);
-    const workbook = XLSX.utils.book_new();
+  inventorySheet.eachRow((row, rowNumber) => {
+    if (rowNumber > 1) {
+      row.height = 24;
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "NorthStock Template");
-    XLSX.writeFile(workbook, "northstock-inventory-template.xlsx");
-  };
+      if (rowNumber % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFEFF6FF" },
+          };
+        });
+      }
+
+      row.eachCell((cell) => {
+        cell.alignment = {
+          vertical: "middle",
+          wrapText: true,
+        };
+
+        cell.border = {
+          bottom: {
+            style: "thin",
+            color: { argb: "FFD8DEE9" },
+          },
+        };
+      });
+    }
+  });
+
+  inventorySheet.getColumn("price").numFmt = "$#,##0.00";
+  inventorySheet.getColumn("quantity").numFmt = "0";
+
+  for (let rowNumber = 2; rowNumber <= 1000; rowNumber += 1) {
+    inventorySheet.getCell(`B${rowNumber}`).dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: ["'Allowed Categories'!$A$2:$A$5"],
+      showErrorMessage: true,
+      errorTitle: "Invalid category",
+      error:
+        "Select a category from the dropdown. Category names must match exactly.",
+    };
+
+    inventorySheet.getCell(`I${rowNumber}`).dataValidation = {
+      type: "list",
+      allowBlank: true,
+      formulae: ['"New,Used,Refurbished"'],
+      showErrorMessage: true,
+      errorTitle: "Invalid condition",
+      error: "Select New, Used, or Refurbished.",
+    };
+
+    inventorySheet.getCell(`D${rowNumber}`).dataValidation = {
+      type: "whole",
+      operator: "greaterThan",
+      formulae: [0],
+      allowBlank: false,
+      showErrorMessage: true,
+      errorTitle: "Invalid quantity",
+      error: "Quantity must be a whole number greater than zero.",
+    };
+  }
+
+  categorySheet.columns = [
+    { header: "Approved NorthStock Categories", key: "category", width: 36 },
+    { header: "Examples", key: "examples", width: 65 },
+  ];
+
+  categorySheet.addRows([
+    {
+      category: "Office Furniture",
+      examples: "Desks, chairs, workstations, filing cabinets and storage",
+    },
+    {
+      category: "Restaurant Equipment",
+      examples: "Ranges, refrigeration, prep tables, sinks and ovens",
+    },
+    {
+      category: "Hotel Supplies",
+      examples: "Guest-room furniture, linens, fixtures and housekeeping equipment",
+    },
+    {
+      category: "Commercial Gym Equipment",
+      examples: "Cardio machines, strength equipment, weights and flooring",
+    },
+  ]);
+
+ instructionsSheet.columns = [
+  {
+    header: "NorthStock Inventory Upload Instructions",
+    key: "topic",
+    width: 32,
+  },
+  {
+    header: "Details",
+    key: "details",
+    width: 100,
+  },
+];
+
+instructionsSheet.addRows([
+  {
+    topic: "Required fields",
+    details: "title, category, quantity, city, and province",
+  },
+  {
+    topic: "Category",
+    details:
+      "Choose an approved value from the category dropdown. Do not rename categories.",
+  },
+  {
+    topic: "Price",
+    details: "Enter numbers only. Do not include dollar signs or commas.",
+  },
+  {
+    topic: "Price note",
+    details:
+      "Optional wording such as Contact for pricing, Negotiable, or Volume pricing available.",
+  },
+  {
+    topic: "Image URL",
+    details: "Optional direct public URL for the listing image.",
+  },
+  {
+    topic: "Expiry date",
+    details:
+      "Optional. Leave blank to use NorthStock’s default 30-day listing period.",
+  },
+  {
+    topic: "Important",
+    details: "Delete the example rows before importing your real inventory.",
+  },
+  {
+    topic: "Support",
+    details:
+      "Email info@northstock.ca if you would like help preparing your inventory file.",
+  },
+]);
+
+  [categorySheet, instructionsSheet].forEach((sheet) => {
+    sheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: 2 },
+    };
+
+    sheet.getRow(1).height = 30;
+
+    sheet.getRow(1).eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF020617" },
+      };
+
+      cell.font = {
+        bold: true,
+        color: { argb: "FFFFFFFF" },
+      };
+
+      cell.alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+    });
+
+    sheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1) {
+        row.height = 30;
+
+        row.eachCell((cell) => {
+          cell.alignment = {
+            vertical: "middle",
+            wrapText: true,
+          };
+
+          cell.border = {
+            bottom: {
+              style: "thin",
+              color: { argb: "FFD8DEE9" },
+            },
+          };
+        });
+      }
+    });
+  });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+  const bytes = new Uint8Array(buffer);
+
+  const blob = new Blob([bytes], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
+  const downloadUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = downloadUrl;
+  link.download = "northstock-inventory-template.xlsx";
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(downloadUrl);
+};
 
   const handleSellerRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -636,7 +953,8 @@ ${invalidRows
 
           <p className="mt-3 text-slate-800">
             Upload multiple listings at once using the NorthStock Excel template.
-            Your category values must match exactly: Office Furniture, or Restaurant Equipment.
+            Your category value must exactly match one of the four approved categories:
+Office Furniture, Restaurant Equipment, Hotel Supplies, or Commercial Gym Equipment.
           </p>
 
           <p className="mt-3 text-sm font-semibold text-slate-700">

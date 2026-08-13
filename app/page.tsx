@@ -185,22 +185,36 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-6 py-20">
   <div className="grid items-center gap-12 lg:grid-cols-2">
     <div>
-      <p className="mb-4 inline-flex rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-800">
-        Commercial inventory sourcing, buying, and selling across North America.
-      </p>
+      <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-blue-200 bg-blue-50 px-5 py-3 shadow-sm">
+  <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-extrabold tracking-wide text-white">
+    FREE FOREVER
+  </span>
+
+  <span className="text-sm font-bold text-slate-900">
+    For buyers and sellers
+  </span>
+</div>
 
       <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
-        Buy direct. Source faster. List commercial inventory for free.
-      </h1>
+  Buy, sell, and source commercial inventory—
+  <span className="text-blue-600"> completely free.</span>
+</h1>
 
-      <p className="mt-6 max-w-xl text-lg text-slate-600">
-        NorthStock helps businesses source commercial inventory directly from
-        suppliers, compare availability, and save time.
-      </p>
+      <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+  NorthStock connects commercial buyers directly with inventory suppliers
+  across Canada and the United States.
+</p>
 
-      <p className="mt-4 max-w-xl text-lg text-slate-600">
-        Built for commercial furniture and equipment suppliers across North America.
-      </p>
+<div className="mt-6 max-w-xl rounded-2xl border border-blue-200 bg-white p-5 shadow-sm">
+  <p className="font-extrabold text-slate-950">
+    Free Forever. No Listing Fees. No Buyer Fees. No Commissions.
+  </p>
+
+  <p className="mt-2 text-sm leading-6 text-slate-600">
+    Create an account, list unlimited commercial inventory, browse listings,
+    and connect directly—all without marketplace fees.
+  </p>
+</div>
 
       <form
         onSubmit={handleHomepageSearch}
@@ -258,10 +272,10 @@ export default function Home() {
       </div>
 
       <div className="mt-8 grid max-w-xl grid-cols-2 gap-4 text-sm font-semibold text-slate-700 md:grid-cols-4">
-        <div>✓ Buy Direct</div>
-        <div>✓ Save Time</div>
-        <div>✓ Compare Suppliers</div>
-        <div>✓ No Seller Fees</div>
+        <div>✓ Free Accounts</div>
+<div>✓ Free Listings</div>
+<div>✓ No Buyer Fees</div>
+<div>✓ No Commissions</div>
       </div>
     </div>
 
@@ -332,7 +346,7 @@ export default function Home() {
   </div>
 </section>
 
-      <section className="mx-auto max-w-7xl px-6 pb-20">
+      {loggedIn && (<section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-3xl border bg-white p-8 shadow-sm">
             <p className="text-sm font-semibold text-slate-500">
@@ -358,7 +372,7 @@ export default function Home() {
   <p className="mt-2 text-slate-600">United States & Canada</p>
 </div>
         </div>
-      </section>
+      </section>)}
 
       <section className="mx-auto max-w-7xl px-6 pb-20">
   <div className="rounded-3xl border bg-white p-10 shadow-sm">
@@ -399,7 +413,7 @@ export default function Home() {
             <li>✓ Receive direct quote requests</li>
             <li>✓ Create a public company profile</li>
             <li>✓ Bulk upload inventory using Excel</li>
-            <li>✓ No seller fees during early access</li>
+            <li>✓ Free listings forever—no seller fees</li>
           </ul>
         </div>
       </div>
@@ -699,15 +713,7 @@ export default function Home() {
       </a>
     </p>
 
-    <p>
-      Phone:{" "}
-      <a
-        href="tel:6132814203"
-        className="font-semibold text-slate-700 hover:underline"
-      >
-        613-281-4203
-      </a>
-    </p>
+
   </div>
 
   <h3 className="mt-6 font-bold">Follow NorthStock</h3>

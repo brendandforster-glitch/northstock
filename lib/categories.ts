@@ -1,15 +1,29 @@
 export const CATEGORIES = [
   "Office Furniture",
   "Restaurant Equipment",
+  "Hotel Supplies",
+  "Commercial Gym Equipment",
 ];
 
 export const CATEGORY_DETAILS = [
   {
     title: "Office Furniture",
-    description: "Chairs, desks, workstations, filing cabinets and more.",
+    description:
+      "Desks, chairs, workstations, filing cabinets, storage and more.",
   },
   {
     title: "Restaurant Equipment",
-    description: "Prep tables, refrigeration, ovens, sinks and more.",
+    description:
+      "Cooking equipment, refrigeration, prep tables, sinks and more.",
+  },
+  {
+    title: "Hotel Supplies",
+    description:
+      "Guest-room furniture, linens, housekeeping equipment, fixtures and more.",
+  },
+  {
+    title: "Commercial Gym Equipment",
+    description:
+      "Cardio machines, strength equipment, weights, flooring and more.",
   },
 ];
