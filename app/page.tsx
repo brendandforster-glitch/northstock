@@ -14,6 +14,16 @@ type FeaturedListing = {
   price_note: string | null;
   image_url: string | null;
 };
+type BuyerRequestPreview = {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  quantity: number | null;
+  budget: string | null;
+  city: string | null;
+  province: string | null;
+};
 
 
 
@@ -32,6 +42,8 @@ function formatPrice(price: number | null, priceNote?: string | null) {
 export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [featuredListings, setFeaturedListings] = useState<FeaturedListing[]>([]);
+  const [buyerRequests, setBuyerRequests] =
+  useState<BuyerRequestPreview[]>([]);
   const [listingCount, setListingCount] = useState(0);
   const [sellerCount, setSellerCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,6 +70,21 @@ export default function Home() {
         .limit(6);
 
       setFeaturedListings((listings || []) as FeaturedListing[]);
+      const { data: activeBuyerRequests } = await supabase
+  .from("buyer_requests")
+  .select(
+    "id, title, category, description, quantity, budget, city, province"
+  )
+  .eq("status", "active")
+  .eq("fulfilled", false)
+  .eq("is_public", true)
+  .gt("expires_at", new Date().toISOString())
+  .order("created_at", { ascending: false })
+  .limit(3);
+
+setBuyerRequests(
+  (activeBuyerRequests || []) as BuyerRequestPreview[]
+);
 
       const { count: activeListingCount } = await supabase
         .from("listings")
@@ -142,8 +169,9 @@ export default function Home() {
             />
           </a>
 
-          <nav className="hidden gap-8 text-sm font-bold text-slate-950 md:flex">
+          <nav className="hidden gap-6 text-sm font-bold text-slate-950 md:flex">
             <a href="/listings">Browse Inventory</a>
+            <a href="/buyer-requests">Buyer Requests</a>
             <a href="/list-inventory">List Inventory</a>
             <a href="/seller">Seller Dashboard</a>
             <a href="/help">Help Centre</a>
@@ -345,7 +373,120 @@ export default function Home() {
     </div>
   </div>
 </section>
+<section className="mx-auto max-w-7xl px-6 pb-20">
+  <div className="overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-sm">
+    <div className="bg-slate-950 p-8 text-white md:p-10">
+      <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <div className="inline-flex rounded-full bg-blue-600 px-4 py-2 text-sm font-extrabold">
+            Live commercial demand
+          </div>
 
+          <h2 className="mt-5 text-3xl font-extrabold md:text-4xl">
+            Buyers Looking for Inventory
+          </h2>
+
+          <p className="mt-3 max-w-2xl leading-7 text-slate-300">
+            See what businesses across North America are actively trying to
+            source. Have matching inventory? Respond directly through
+            NorthStock.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <a
+            href="/buyer-requests"
+            className="rounded-xl bg-white px-6 py-4 text-center font-extrabold text-slate-950"
+          >
+            Browse All Requests
+          </a>
+
+          <a
+            href="/buyer-requests/new"
+            className="rounded-xl bg-blue-600 px-6 py-4 text-center font-extrabold text-white"
+          >
+            Post What You Need
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {buyerRequests.length > 0 ? (
+      <div className="grid gap-5 p-6 md:grid-cols-3 md:p-8">
+        {buyerRequests.map((request) => (
+          <article
+            key={request.id}
+            className="flex flex-col rounded-2xl border border-slate-300 bg-white p-6"
+          >
+            <span className="self-start rounded-full bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-700">
+              {request.category}
+            </span>
+
+            <h3 className="mt-5 text-xl font-extrabold">
+              {request.title}
+            </h3>
+
+            <p className="mt-3 text-sm font-semibold text-slate-600">
+              {[request.city, request.province]
+                .filter(Boolean)
+                .join(", ")}
+            </p>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs font-bold uppercase text-slate-500">
+                  Quantity
+                </p>
+
+                <p className="mt-1 font-extrabold">
+                  {request.quantity ?? "Flexible"}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs font-bold uppercase text-slate-500">
+                  Budget
+                </p>
+
+                <p className="mt-1 font-extrabold">
+                  {request.budget || "Open"}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-5 max-h-20 overflow-hidden text-sm leading-6 text-slate-600">
+              {request.description}
+            </p>
+
+            <a
+              href={`/buyer-requests/${request.id}`}
+              className="mt-auto pt-6 font-extrabold text-blue-700"
+            >
+              View Request →
+            </a>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <div className="p-8 text-center">
+        <h3 className="text-2xl font-extrabold">
+          Be the first buyer to post what you need
+        </h3>
+
+        <p className="mt-3 text-slate-600">
+          Buyer requests are free to post, with no buyer fees or commissions.
+        </p>
+
+        <a
+          href="/buyer-requests/new"
+          className="mt-6 inline-block rounded-xl bg-slate-950 px-6 py-4 font-extrabold text-white"
+        >
+          Post a Buyer Request — Free
+        </a>
+      </div>
+    )}
+  </div>
+</section>
       {loggedIn && (<section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-3xl border bg-white p-8 shadow-sm">
