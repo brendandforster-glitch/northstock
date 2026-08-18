@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 
 type Listing = {
   id: string;
@@ -53,6 +53,7 @@ export default function SellerPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [quoteRequests, setQuoteRequests] = useState(0);
   const [listingViews, setListingViews] = useState(0);
+  const [buyerResponseCount, setBuyerResponseCount] = useState(0);
 
   useEffect(() => {
     loadDashboard();
@@ -86,6 +87,29 @@ export default function SellerPage() {
           accessToken: session.access_token,
         }),
       });
+
+      try {
+        const buyerResponseRequest = await fetch(
+          "/api/seller/buyer-responses",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            cache: "no-store",
+          }
+        );
+
+        if (buyerResponseRequest.ok) {
+          const result = await buyerResponseRequest.json();
+          setBuyerResponseCount(result.responses?.length || 0);
+        } else {
+          setBuyerResponseCount(0);
+        }
+      } catch (error) {
+        console.error("Buyer response count error:", error);
+        setBuyerResponseCount(0);
+      }
     }
 
     const { data: companyData } = await supabase
@@ -140,10 +164,18 @@ export default function SellerPage() {
     setLoading(false);
   }
 
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  }
+
   async function deleteListing(id: string) {
     if (!confirm("Delete this listing?")) return;
 
-    const { error } = await supabase.from("listings").delete().eq("id", id);
+    const { error } = await supabase
+      .from("listings")
+      .delete()
+      .eq("id", id);
 
     if (error) {
       alert(error.message);
@@ -178,6 +210,7 @@ export default function SellerPage() {
 
   async function renewListing(id: string) {
     const expiry = new Date();
+
     expiry.setDate(expiry.getDate() + 30);
     expiry.setHours(23, 59, 59, 999);
 
@@ -199,6 +232,7 @@ export default function SellerPage() {
 
   async function renewAllListings() {
     const expiry = new Date();
+
     expiry.setDate(expiry.getDate() + 30);
     expiry.setHours(23, 59, 59, 999);
 
@@ -236,43 +270,45 @@ export default function SellerPage() {
 
     loadDashboard();
   }
+
   async function downloadInventory() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  if (!session?.access_token) {
-    window.location.href = "/login";
-    return;
+    if (!session?.access_token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const response = await fetch("/api/seller/export-inventory", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        accessToken: session.access_token,
+      }),
+    });
+
+    if (!response.ok) {
+      alert("Inventory export failed. Please try again.");
+      return;
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "northstock-inventory.xlsx";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
   }
-
-  const response = await fetch("/api/seller/export-inventory", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      accessToken: session.access_token,
-    }),
-  });
-
-  if (!response.ok) {
-    alert("Inventory export failed. Please try again.");
-    return;
-  }
-
-  const blob = await response.blob();
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = "northstock-inventory.xlsx";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  window.URL.revokeObjectURL(url);
-}
 
   const activeListings = listings.filter(
     (listing) =>
@@ -297,19 +333,23 @@ export default function SellerPage() {
   );
 
   const quoteRequestsPerListing =
-    listings.length > 0 ? (quoteRequests / listings.length).toFixed(2) : "0.00";
+    listings.length > 0
+      ? (quoteRequests / listings.length).toFixed(2)
+      : "0.00";
 
   const viewsPerListing =
-    listings.length > 0 ? (listingViews / listings.length).toFixed(2) : "0.00";
+    listings.length > 0
+      ? (listingViews / listings.length).toFixed(2)
+      : "0.00";
 
   const sellerHealth =
     activeListings > 0 && quoteRequests > 0
       ? "Active with buyer interest"
       : activeListings > 0
-      ? "Active inventory listed"
-      : listings.length > 0
-      ? "Needs renewal"
-      : "No inventory listed";
+        ? "Active inventory listed"
+        : listings.length > 0
+          ? "Needs renewal"
+          : "No inventory listed";
 
   const filteredListings = listings.filter((item) => {
     const search = searchTerm.toLowerCase().trim();
@@ -342,31 +382,72 @@ export default function SellerPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
-          <a href="/">
+      <header className="overflow-x-auto border-b border-slate-200 bg-white">
+        <div className="mx-auto flex min-w-max max-w-[1600px] items-center gap-8 px-6 py-4">
+          <a href="/" className="shrink-0">
             <img
               src="/northstock-logo.png"
               alt="NorthStock"
-              className="h-12 w-auto"
+              className="h-11 w-auto"
             />
           </a>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <a href="/listings" className="text-sm font-bold text-slate-950">
-              Browse Inventory
+          <nav className="ml-auto flex items-center gap-6 whitespace-nowrap text-sm font-semibold text-slate-700">
+            <a
+              href="/listings"
+              className="transition hover:text-blue-600"
+            >
+              Browse
             </a>
 
-            <a href="/seller/leads" className="text-sm font-bold text-slate-950">
-              Quote Requests
+            <a
+              href="/buyer-requests"
+              className="transition hover:text-blue-600"
+            >
+              Buyer Requests
             </a>
 
             <a
               href="/list-inventory"
-              className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+              className="transition hover:text-blue-600"
             >
-              Add / Bulk Upload Inventory
+              Sell Inventory
             </a>
+
+            <a
+              href="/help"
+              className="transition hover:text-blue-600"
+            >
+              Help
+            </a>
+
+            <a
+              href="/#contact"
+              className="transition hover:text-blue-600"
+            >
+              Contact
+            </a>
+          </nav>
+
+          <div className="flex shrink-0 items-center gap-4 whitespace-nowrap border-l border-slate-200 pl-6 text-sm font-bold">
+            <a href="/seller" className="text-blue-600">
+              Dashboard
+            </a>
+
+            <a
+              href="/seller/buyer-responses"
+              className="transition hover:text-blue-600"
+            >
+              My Responses
+            </a>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-xl bg-red-600 px-5 py-3 text-white transition hover:bg-red-700"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </header>
@@ -374,9 +455,13 @@ export default function SellerPage() {
       <section className="mx-auto max-w-7xl px-6 py-10">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-4xl font-bold">Seller Dashboard</h1>
+            <h1 className="text-4xl font-bold">
+              Seller Dashboard
+            </h1>
+
             <p className="mt-2 text-slate-700">
-              Manage your NorthStock company profile, inventory, and quote requests.
+              Manage your NorthStock company profile, inventory, listing quote
+              requests, and Buyer Request responses.
             </p>
           </div>
 
@@ -407,60 +492,106 @@ export default function SellerPage() {
             )}
 
             <a
-              href="/seller/leads"
+              href="/seller/buyer-responses"
               className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white"
             >
-              View Quote Requests
+              View Buyer Responses
+            </a>
+
+            <a
+              href="/seller/leads"
+              className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white"
+            >
+              View Listing Quotes
             </a>
           </div>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Total Listings</p>
-            <h2 className="mt-2 text-3xl font-bold">{listings.length}</h2>
+            <p className="text-sm text-slate-500">
+              Total Listings
+            </p>
+
+            <h2 className="mt-2 text-3xl font-bold">
+              {listings.length}
+            </h2>
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Total Quantity</p>
-            <h2 className="mt-2 text-3xl font-bold">{totalQuantity}</h2>
+            <p className="text-sm text-slate-500">
+              Total Quantity
+            </p>
+
+            <h2 className="mt-2 text-3xl font-bold">
+              {totalQuantity}
+            </h2>
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Active</p>
+            <p className="text-sm text-slate-500">
+              Active
+            </p>
+
             <h2 className="mt-2 text-3xl font-bold text-green-600">
               {activeListings}
             </h2>
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Expired</p>
+            <p className="text-sm text-slate-500">
+              Expired
+            </p>
+
             <h2 className="mt-2 text-3xl font-bold text-red-600">
               {expiredListings}
             </h2>
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Sold</p>
+            <p className="text-sm text-slate-500">
+              Sold
+            </p>
+
             <h2 className="mt-2 text-3xl font-bold text-amber-600">
               {soldListings}
             </h2>
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Quote Requests</p>
+            <p className="text-sm text-slate-500">
+              Listing Quotes
+            </p>
+
             <h2 className="mt-2 text-3xl font-bold text-blue-600">
               {quoteRequests}
             </h2>
           </div>
+
+          <a
+            href="/seller/buyer-responses"
+            className="rounded-3xl border border-blue-200 bg-blue-50 p-6 shadow-sm transition hover:border-blue-400"
+          >
+            <p className="text-sm font-semibold text-blue-700">
+              Buyer Responses
+            </p>
+
+            <h2 className="mt-2 text-3xl font-bold text-blue-600">
+              {buyerResponseCount}
+            </h2>
+          </a>
         </div>
 
         <div className="mb-8 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-2xl font-bold">Inventory Performance</h2>
+              <h2 className="text-2xl font-bold">
+                Inventory Performance
+              </h2>
+
               <p className="mt-2 text-slate-700">
-                A quick snapshot of your inventory activity, visibility, and quote request performance.
+                A quick snapshot of your inventory activity, visibility, and
+                listing quote request performance.
               </p>
             </div>
 
@@ -468,60 +599,92 @@ export default function SellerPage() {
               href="/seller/leads"
               className="text-sm font-bold text-blue-600 hover:underline"
             >
-              View Quote Requests →
+              View Listing Quote Requests →
             </a>
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Seller Status</p>
-              <h3 className="mt-2 text-xl font-bold">{sellerHealth}</h3>
+              <p className="text-sm text-slate-500">
+                Seller Status
+              </p>
+
+              <h3 className="mt-2 text-xl font-bold">
+                {sellerHealth}
+              </h3>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Listing Views</p>
-              <h3 className="mt-2 text-3xl font-bold">{listingViews}</h3>
+              <p className="text-sm text-slate-500">
+                Listing Views
+              </p>
+
+              <h3 className="mt-2 text-3xl font-bold">
+                {listingViews}
+              </h3>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Views / Listing</p>
-              <h3 className="mt-2 text-3xl font-bold">{viewsPerListing}</h3>
+              <p className="text-sm text-slate-500">
+                Views / Listing
+              </p>
+
+              <h3 className="mt-2 text-3xl font-bold">
+                {viewsPerListing}
+              </h3>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Quote Requests / Listing</p>
+              <p className="text-sm text-slate-500">
+                Quote Requests / Listing
+              </p>
+
               <h3 className="mt-2 text-3xl font-bold">
                 {quoteRequestsPerListing}
               </h3>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Active Share</p>
+              <p className="text-sm text-slate-500">
+                Active Share
+              </p>
+
               <h3 className="mt-2 text-3xl font-bold">
                 {listings.length > 0
-                  ? `${Math.round((activeListings / listings.length) * 100)}%`
+                  ? `${Math.round(
+                      (activeListings / listings.length) * 100
+                    )}%`
                   : "0%"}
               </h3>
             </div>
           </div>
         </div>
 
-        <div className="mb-8 grid gap-3 md:grid-cols-4">
+        <div className="mb-8 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <a
             href="/list-inventory"
             className="rounded-xl bg-slate-950 px-5 py-4 text-center font-semibold text-white"
           >
             Add Inventory / Bulk Upload
           </a>
-          
-          <button
-  onClick={downloadInventory}
-  className="rounded-xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-950"
->
-  Download Current Inventory
-</button>
 
           <button
+            type="button"
+            onClick={downloadInventory}
+            className="rounded-xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-950"
+          >
+            Download Current Inventory
+          </button>
+
+          <a
+            href="/seller/buyer-responses"
+            className="rounded-xl bg-blue-600 px-5 py-4 text-center font-semibold text-white"
+          >
+            My Buyer Responses
+          </a>
+
+          <button
+            type="button"
             onClick={renewAllListings}
             className="rounded-xl border border-slate-300 bg-white px-5 py-4 font-semibold text-slate-950"
           >
@@ -529,6 +692,7 @@ export default function SellerPage() {
           </button>
 
           <button
+            type="button"
             onClick={deleteAllListings}
             className="rounded-xl bg-red-600 px-5 py-4 font-semibold text-white"
           >
@@ -537,13 +701,17 @@ export default function SellerPage() {
         </div>
 
         <div className="mb-8 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
-          <label className="mb-3 block text-sm font-semibold text-slate-800">
+          <label
+            htmlFor="inventory-search"
+            className="mb-3 block text-sm font-semibold text-slate-800"
+          >
             Search Your Inventory
           </label>
 
           <input
+            id="inventory-search"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Search by title, SKU, brand, model, city, category, or status..."
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
           />
@@ -567,7 +735,9 @@ export default function SellerPage() {
                       {item.category}
                     </p>
 
-                    <h2 className="mt-1 text-2xl font-bold">{item.title}</h2>
+                    <h2 className="mt-1 text-2xl font-bold">
+                      {item.title}
+                    </h2>
 
                     <p className="mt-2 font-semibold text-slate-950">
                       {formatPrice(item.price, item.price_note)}
@@ -602,7 +772,8 @@ export default function SellerPage() {
                       )}
 
                       <p>
-                        <strong>Status:</strong> {item.status || "Not set"}
+                        <strong>Status:</strong>{" "}
+                        {item.status || "Not set"}
                       </p>
 
                       <p>
@@ -628,6 +799,7 @@ export default function SellerPage() {
                     </a>
 
                     <button
+                      type="button"
                       onClick={() => renewListing(item.id)}
                       className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold"
                     >
@@ -635,6 +807,7 @@ export default function SellerPage() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => markSold(item.id)}
                       className="rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white hover:bg-amber-600"
                     >
@@ -642,6 +815,7 @@ export default function SellerPage() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => deleteListing(item.id)}
                       className="rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white"
                     >
