@@ -159,55 +159,76 @@ setBuyerRequests(
 
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
-          <a href="/">
+      <header className="overflow-x-auto border-b border-slate-200 bg-white">
+        <div className="mx-auto flex min-w-max max-w-[1600px] items-center gap-8 px-6 py-4">
+          <a href="/" className="shrink-0">
             <img
               src="/northstock-logo.png"
               alt="NorthStock"
-              className="h-12 w-auto"
+              className="h-11 w-auto"
             />
           </a>
 
-          <nav className="hidden gap-6 text-sm font-bold text-slate-950 md:flex">
-            <a href="/listings">Browse Inventory</a>
-            <a href="/buyer-requests">Buyer Requests</a>
-            <a href="/list-inventory">List Inventory</a>
-            <a href="/seller">Seller Dashboard</a>
-            <a href="/help">Help Centre</a>
-            <a href="#contact">Contact</a>
+          <nav className="ml-auto flex items-center gap-6 whitespace-nowrap text-sm font-semibold text-slate-700">
+            <a href="/listings" className="transition hover:text-blue-600">
+              Browse
+            </a>
+            <a
+              href="/buyer-requests"
+              className="transition hover:text-blue-600"
+            >
+              Buyer Requests
+            </a>
+            <a
+              href="/list-inventory"
+              className="transition hover:text-blue-600"
+            >
+              Sell Inventory
+            </a>
+            <a href="/help" className="transition hover:text-blue-600">
+              Help
+            </a>
+            <a href="#contact" className="transition hover:text-blue-600">
+              Contact
+            </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-4 whitespace-nowrap border-l border-slate-200 pl-6">
             {loggedIn ? (
               <>
-                <a href="/seller" className="text-sm font-semibold text-black">
-                  Seller Dashboard
+                <a
+                  href="/seller"
+                  className="text-sm font-semibold text-slate-950 transition hover:text-blue-600"
+                >
+                  Dashboard
                 </a>
 
                 <a
                   href="/buyer-requests/my-requests"
-                  className="text-sm font-semibold text-black"
+                  className="text-sm font-semibold text-slate-950 transition hover:text-blue-600"
                 >
-                  My Buyer Requests
+                  My Requests
                 </a>
 
                 <button
                   onClick={handleLogout}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                  className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
                 >
                   Logout
                 </button>
               </>
             ) : (
               <>
-                <a href="/login" className="text-sm font-semibold text-black">
+                <a
+                  href="/login"
+                  className="text-sm font-semibold text-slate-950 transition hover:text-blue-600"
+                >
                   Log In
                 </a>
 
                 <a
                   href="/login"
-                  className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                  className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Create Free Account
                 </a>
