@@ -35,16 +35,12 @@ export async function POST(request: NextRequest) {
 
     const accessToken = authorization.slice("Bearer ".length);
 
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      serviceRoleKey,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     const {
       data: { user },
@@ -61,29 +57,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const requestId =
-      typeof body.requestId === "string"
-        ? body.requestId.trim()
-        : "";
+      typeof body.requestId === "string" ? body.requestId.trim() : "";
 
     const message =
-      typeof body.message === "string"
-        ? body.message.trim()
-        : "";
+      typeof body.message === "string" ? body.message.trim() : "";
 
     const priceQuote =
-      typeof body.priceQuote === "string"
-        ? body.priceQuote.trim()
-        : "";
+      typeof body.priceQuote === "string" ? body.priceQuote.trim() : "";
 
     const availability =
-      typeof body.availability === "string"
-        ? body.availability.trim()
-        : "";
+      typeof body.availability === "string" ? body.availability.trim() : "";
 
     const submittedCompanyName =
-      typeof body.companyName === "string"
-        ? body.companyName.trim()
-        : "";
+      typeof body.companyName === "string" ? body.companyName.trim() : "";
 
     if (!requestId || !message) {
       return NextResponse.json(
@@ -99,16 +85,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const {
-      data: buyerRequest,
-      error: buyerRequestError,
-    } = await supabaseAdmin
-      .from("buyer_requests")
-      .select(
-        "id, user_id, title, status, fulfilled, expires_at"
-      )
-      .eq("id", requestId)
-      .single();
+    const { data: buyerRequest, error: buyerRequestError } =
+      await supabaseAdmin
+        .from("buyer_requests")
+        .select("id, user_id, title, status, fulfilled, expires_at")
+        .eq("id", requestId)
+        .single();
 
     if (buyerRequestError || !buyerRequest) {
       return NextResponse.json(
@@ -145,15 +127,14 @@ export async function POST(request: NextRequest) {
       .order("created_at", { ascending: false })
       .limit(1);
 
+    // Prefer the authenticated seller's saved company profile so a client
+    // cannot replace an established company name in the notification.
     const companyName =
-      submittedCompanyName ||
       companies?.[0]?.company_name ||
+      submittedCompanyName ||
       "NorthStock Seller";
 
-    const {
-      data: savedResponse,
-      error: responseError,
-    } = await supabaseAdmin
+    const { data: savedResponse, error: responseError } = await supabaseAdmin
       .from("buyer_request_responses")
       .insert({
         request_id: requestId,
@@ -185,12 +166,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const {
-      data: buyerUser,
-      error: buyerUserError,
-    } = await supabaseAdmin.auth.admin.getUserById(
-      buyerRequest.user_id
-    );
+    const { data: buyerUser, error: buyerUserError } =
+      await supabaseAdmin.auth.admin.getUserById(buyerRequest.user_id);
 
     if (buyerUserError || !buyerUser.user?.email) {
       console.error("Buyer email lookup error:", buyerUserError);
@@ -202,17 +179,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      "https://northstock.ca";
+    const siteUrl = (
+      process.env.NEXT_PUBLIC_SITE_URL || "https://northstock.ca"
+    ).replace(/\/+$/, "");
+
+    const buyerRequestsUrl = `${siteUrl}/buyer-requests/my-requests`;
 
     const safeTitle = escapeHtml(buyerRequest.title);
     const safeCompany = escapeHtml(companyName);
     const safeMessage = escapeHtml(message).replaceAll("\n", "<br />");
     const safePrice = escapeHtml(priceQuote || "Not specified");
-    const safeAvailability = escapeHtml(
-      availability || "Not specified"
-    );
+    const safeAvailability = escapeHtml(availability || "Not specified");
+    const safeBuyerRequestsUrl = escapeHtml(buyerRequestsUrl);
 
     const resend = new Resend(resendApiKey);
 
@@ -221,11 +199,25 @@ export async function POST(request: NextRequest) {
       to: buyerUser.user.email,
       subject: `New response to your NorthStock request: ${buyerRequest.title}`,
       ...(user.email ? { replyTo: user.email } : {}),
+      text: [
+        `New response to your NorthStock buyer request: ${buyerRequest.title}`,
+        "",
+        `${companyName} responded to your request.`,
+        `Price or quote: ${priceQuote || "Not specified"}`,
+        `Availability: ${availability || "Not specified"}`,
+        "",
+        "Seller message:",
+        message,
+        "",
+        `View your request and its responses: ${buyerRequestsUrl}`,
+        "",
+        "Reply directly to this email to contact the responding seller.",
+      ].join("\n"),
       html: `
         <div style="background:#f1f5f9;padding:32px;font-family:Arial,sans-serif;color:#0f172a;">
           <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:18px;overflow:hidden;">
             <div style="background:#020617;padding:28px;color:#ffffff;">
-              <p style="margin:0 0 8px;color:#93c5fd;font-size:13px;font-weight:bold;text-transform:uppercase;">
+              <p style="margin:0 0 8px;color:#93c5fd;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.04em;">
                 New Buyer Request Response
               </p>
 
@@ -274,11 +266,16 @@ export async function POST(request: NextRequest) {
               </p>
 
               <a
-                href="${siteUrl}/buyer-requests/${buyerRequest.id}"
+                href="${safeBuyerRequestsUrl}"
                 style="display:inline-block;margin-top:22px;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 20px;border-radius:10px;"
               >
-                View Your Buyer Request
+                View Responses to Your Request
               </a>
+
+              <p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#64748b;word-break:break-all;">
+                If the button does not work, copy and paste this link into your browser:<br />
+                <a href="${safeBuyerRequestsUrl}" style="color:#2563eb;">${safeBuyerRequestsUrl}</a>
+              </p>
             </div>
 
             <div style="border-top:1px solid #e2e8f0;padding:20px 28px;color:#64748b;font-size:13px;">

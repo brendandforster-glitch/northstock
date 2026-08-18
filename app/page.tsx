@@ -185,6 +185,13 @@ setBuyerRequests(
                   Seller Dashboard
                 </a>
 
+                <a
+                  href="/buyer-requests/my-requests"
+                  className="text-sm font-semibold text-black"
+                >
+                  My Buyer Requests
+                </a>
+
                 <button
                   onClick={handleLogout}
                   className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
@@ -251,7 +258,7 @@ setBuyerRequests(
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search desks, chairs, prep tables, refrigeration..."
+          placeholder="Search commercial furniture, equipment, supplies, and more..."
           className="flex-1 rounded-xl border border-slate-300 bg-white px-5 py-4 text-slate-950 placeholder:text-slate-500"
         />
 
@@ -349,8 +356,9 @@ setBuyerRequests(
             <>
               {[
                 "Herman Miller Aeron Chair",
-                "Stainless Steel Prep Table",
-                "DeWalt 20V Max Drill Set",
+                "Commercial Reach-In Refrigerator",
+                "Hotel Lobby Seating",
+                "Commercial Treadmill",
               ].map((item) => (
                 <div
                   key={item}
@@ -590,7 +598,8 @@ setBuyerRequests(
   <div className="rounded-2xl bg-slate-50 p-6">
     <h3 className="font-bold">Save time sourcing inventory</h3>
     <p className="mt-2 text-sm text-slate-600">
-      Search across office furniture and restaurant equipment from one focused commercial marketplace.
+      Search furniture, foodservice equipment, hotel supplies, fitness equipment,
+      and other commercial inventory from one focused marketplace.
     </p>
   </div>
 
@@ -680,14 +689,20 @@ setBuyerRequests(
 
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="mb-8 flex items-end justify-between">
-          <h2 className="text-3xl font-bold">Browse by category</h2>
+          <div>
+            <h2 className="text-3xl font-bold">Browse by category</h2>
+            <p className="mt-2 text-slate-600">
+              Explore inventory for workplaces, foodservice, hospitality,
+              commercial fitness, and more.
+            </p>
+          </div>
 
           <a className="text-sm font-semibold text-slate-700" href="/listings">
             View all
           </a>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {CATEGORY_DETAILS.map((category) => (
             <a
               href="/listings"
@@ -880,6 +895,22 @@ setBuyerRequests(
                 <p>
                   <a href="/listings">Browse Inventory</a>
                 </p>
+
+                <p>
+                  <a href="/buyer-requests">Buyer Requests</a>
+                </p>
+
+                <p>
+                  <a href="/buyer-requests/new">Post a Buyer Request</a>
+                </p>
+
+                {loggedIn && (
+                  <p>
+                    <a href="/buyer-requests/my-requests">
+                      My Buyer Requests
+                    </a>
+                  </p>
+                )}
 
                 <p>
                   <a href="/list-inventory">List Inventory</a>
