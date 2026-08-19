@@ -8,6 +8,12 @@ type BuyerResponseRow = {
   message: string;
   price_quote: string | null;
   availability: string | null;
+  status:
+    | "pending"
+    | "shortlisted"
+    | "accepted"
+    | "declined";
+  status_updated_at: string | null;
   created_at: string;
 };
 
@@ -22,7 +28,9 @@ type BuyerRequestRow = {
   created_at: string;
 };
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     const supabaseUrl =
       process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -36,26 +44,31 @@ export async function GET(request: NextRequest) {
           error:
             "Required server configuration is missing.",
         },
-        { status: 500 }
+        {
+          status: 500,
+        }
       );
     }
 
     const authorization =
       request.headers.get("authorization");
 
-    if (!authorization?.startsWith("Bearer ")) {
+    if (
+      !authorization?.startsWith("Bearer ")
+    ) {
       return NextResponse.json(
         {
           error:
             "You must be logged in to view your responses.",
         },
-        { status: 401 }
+        {
+          status: 401,
+        }
       );
     }
 
-    const accessToken = authorization.slice(
-      "Bearer ".length
-    );
+    const accessToken =
+      authorization.slice("Bearer ".length);
 
     const supabaseAdmin = createClient(
       supabaseUrl,
@@ -71,7 +84,10 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabaseAdmin.auth.getUser(accessToken);
+    } =
+      await supabaseAdmin.auth.getUser(
+        accessToken
+      );
 
     if (userError || !user) {
       return NextResponse.json(
@@ -79,7 +95,9 @@ export async function GET(request: NextRequest) {
           error:
             "Your session is invalid or has expired.",
         },
-        { status: 401 }
+        {
+          status: 401,
+        }
       );
     }
 
@@ -89,7 +107,7 @@ export async function GET(request: NextRequest) {
     } = await supabaseAdmin
       .from("buyer_request_responses")
       .select(
-        "id, request_id, company_name, message, price_quote, availability, created_at"
+        "id, request_id, company_name, message, price_quote, availability, status, status_updated_at, created_at"
       )
       .eq("seller_user_id", user.id)
       .order("created_at", {
@@ -107,7 +125,9 @@ export async function GET(request: NextRequest) {
           error:
             "Your buyer request responses could not be loaded.",
         },
-        { status: 500 }
+        {
+          status: 500,
+        }
       );
     }
 
@@ -116,7 +136,9 @@ export async function GET(request: NextRequest) {
 
     const requestIds = [
       ...new Set(
-        responses.map((item) => item.request_id)
+        responses.map(
+          (response) => response.request_id
+        )
       ),
     ];
 
@@ -144,7 +166,9 @@ export async function GET(request: NextRequest) {
             error:
               "The related buyer requests could not be loaded.",
           },
-          { status: 500 }
+          {
+            status: 500,
+          }
         );
       }
 
@@ -161,12 +185,15 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        responses: responses.map((response) => ({
-          ...response,
-          request:
-            requestById.get(response.request_id) ||
-            null,
-        })),
+        responses: responses.map(
+          (response) => ({
+            ...response,
+            request:
+              requestById.get(
+                response.request_id
+              ) || null,
+          })
+        ),
       },
       {
         headers: {
@@ -185,7 +212,9 @@ export async function GET(request: NextRequest) {
         error:
           "An unexpected server error occurred.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

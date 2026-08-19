@@ -21,26 +21,95 @@ type BuyerRequestResponse = {
   message: string;
   price_quote: string | null;
   availability: string | null;
+  status:
+    | "pending"
+    | "shortlisted"
+    | "accepted"
+    | "declined";
+  status_updated_at: string | null;
   created_at: string;
   request: RelatedBuyerRequest | null;
 };
 
-type StatusFilter = "all" | "active" | "closed";
+type StatusFilter =
+  | "all"
+  | "active"
+  | "closed";
+
+async function readJsonResponse(
+  response: Response
+) {
+  const contentType =
+    response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    const body = await response.text();
+
+    console.error(
+      "Expected JSON response but received:",
+      body.slice(0, 300)
+    );
+
+    throw new Error(
+      "The response service is not available. Confirm the API route file is in the correct folder and restart the development server."
+    );
+  }
+
+  return response.json();
+}
+
+function getBuyerDecision(
+  status: BuyerRequestResponse["status"]
+) {
+  switch (status) {
+    case "accepted":
+      return {
+        label: "Accepted by Buyer",
+        className:
+          "bg-green-100 text-green-800",
+      };
+
+    case "shortlisted":
+      return {
+        label: "Shortlisted",
+        className:
+          "bg-amber-100 text-amber-800",
+      };
+
+    case "declined":
+      return {
+        label: "Declined",
+        className: "bg-red-100 text-red-800",
+      };
+
+    default:
+      return {
+        label: "Pending Buyer Review",
+        className:
+          "bg-slate-100 text-slate-700",
+      };
+  }
+}
 
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-CA", {
+  return new Date(
+    dateString
+  ).toLocaleDateString("en-CA", {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
 }
 
-function getRequestStatus(request: RelatedBuyerRequest | null) {
+function getRequestStatus(
+  request: RelatedBuyerRequest | null
+) {
   if (!request) {
     return {
       label: "Unavailable",
       active: false,
-      className: "bg-slate-200 text-slate-700",
+      className:
+        "bg-slate-200 text-slate-700",
     };
   }
 
@@ -48,15 +117,20 @@ function getRequestStatus(request: RelatedBuyerRequest | null) {
     return {
       label: "Fulfilled",
       active: false,
-      className: "bg-green-100 text-green-800",
+      className:
+        "bg-green-100 text-green-800",
     };
   }
 
-  if (new Date(request.expires_at).getTime() <= Date.now()) {
+  if (
+    new Date(request.expires_at).getTime() <=
+    Date.now()
+  ) {
     return {
       label: "Expired",
       active: false,
-      className: "bg-amber-100 text-amber-800",
+      className:
+        "bg-amber-100 text-amber-800",
     };
   }
 
@@ -64,7 +138,8 @@ function getRequestStatus(request: RelatedBuyerRequest | null) {
     return {
       label: "Active",
       active: true,
-      className: "bg-blue-100 text-blue-800",
+      className:
+        "bg-blue-100 text-blue-800",
     };
   }
 
@@ -76,7 +151,8 @@ function getRequestStatus(request: RelatedBuyerRequest | null) {
   return {
     label,
     active: false,
-    className: "bg-slate-200 text-slate-700",
+    className:
+      "bg-slate-200 text-slate-700",
   };
 }
 
@@ -85,9 +161,15 @@ export default function SellerBuyerResponsesPage() {
     BuyerRequestResponse[]
   >([]);
 
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] =
+    useState(true);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
+
+  const [searchTerm, setSearchTerm] =
+    useState("");
+
   const [statusFilter, setStatusFilter] =
     useState<StatusFilter>("all");
 
@@ -114,35 +196,37 @@ export default function SellerBuyerResponsesPage() {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization:
+              `Bearer ${session.access_token}`,
           },
           cache: "no-store",
         }
       );
 
-      const contentType = response.headers.get("content-type");
+      const result =
+        await readJsonResponse(response);
 
-const result = contentType?.includes("application/json")
-  ? await response.json()
-  : null;
+      if (!response.ok) {
+        setResponses([]);
 
-if (!response.ok || !result) {
-  setResponses([]);
+        setErrorMessage(
+          result.error ||
+            "Your buyer request responses could not be loaded."
+        );
 
-  setErrorMessage(
-    result?.error ||
-      "The buyer responses API could not be reached. Confirm that app/api/seller/buyer-responses/route.ts exists, then restart the development server."
-  );
-
-  setLoading(false);
-  return;
-}
+        setLoading(false);
+        return;
+      }
 
       setResponses(
-        (result.responses || []) as BuyerRequestResponse[]
+        (result.responses ||
+          []) as BuyerRequestResponse[]
       );
     } catch (error) {
-      console.error("Buyer response history error:", error);
+      console.error(
+        "Buyer response history error:",
+        error
+      );
 
       setResponses([]);
 
@@ -159,53 +243,80 @@ if (!response.ok || !result) {
     window.location.href = "/";
   }
 
-  const activeResponses = responses.filter(
-    (response) => getRequestStatus(response.request).active
-  ).length;
+  const activeResponses =
+    responses.filter(
+      (response) =>
+        getRequestStatus(response.request).active
+    ).length;
 
-  const closedResponses =
-    responses.length - activeResponses;
+  const shortlistedResponses =
+    responses.filter(
+      (response) =>
+        response.status === "shortlisted"
+    ).length;
 
-  const quotedResponses = responses.filter(
-    (response) => response.price_quote?.trim()
-  ).length;
+  const acceptedResponses =
+    responses.filter(
+      (response) =>
+        response.status === "accepted"
+    ).length;
 
-  const filteredResponses = responses.filter((response) => {
-    const status = getRequestStatus(response.request);
+  const filteredResponses =
+    responses.filter((response) => {
+      const requestStatus =
+        getRequestStatus(response.request);
 
-    if (statusFilter === "active" && !status.active) {
-      return false;
-    }
+      const buyerDecision =
+        getBuyerDecision(response.status);
 
-    if (statusFilter === "closed" && status.active) {
-      return false;
-    }
+      if (
+        statusFilter === "active" &&
+        !requestStatus.active
+      ) {
+        return false;
+      }
 
-    const search = searchTerm.toLowerCase().trim();
+      if (
+        statusFilter === "closed" &&
+        requestStatus.active
+      ) {
+        return false;
+      }
 
-    if (!search) return true;
+      const search =
+        searchTerm.toLowerCase().trim();
 
-    return [
-      response.request?.title,
-      response.request?.category,
-      response.request?.company_name,
-      response.company_name,
-      response.message,
-      response.price_quote,
-      response.availability,
-      status.label,
-    ]
-      .filter(Boolean)
-      .some((value) =>
-        value!.toLowerCase().includes(search)
-      );
-  });
+      if (!search) {
+        return true;
+      }
+
+      return [
+        response.request?.title,
+        response.request?.category,
+        response.request?.company_name,
+        response.company_name,
+        response.message,
+        response.price_quote,
+        response.availability,
+        requestStatus.label,
+        buyerDecision.label,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          value!
+            .toLowerCase()
+            .includes(search)
+        );
+    });
 
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
       <header className="overflow-x-auto border-b border-slate-200 bg-white">
         <div className="mx-auto flex min-w-max max-w-[1600px] items-center gap-8 px-6 py-4">
-          <a href="/" className="shrink-0">
+          <a
+            href="/"
+            className="shrink-0"
+          >
             <img
               src="/northstock-logo.png"
               alt="NorthStock"
@@ -288,8 +399,9 @@ if (!response.ok || !result) {
             </h1>
 
             <p className="mt-3 max-w-3xl text-lg text-slate-700">
-              Review every Buyer Request you have answered and
-              track whether the opportunity is still active.
+              Review every Buyer Request you
+              have answered and track whether
+              the opportunity is still active.
             </p>
           </div>
 
@@ -350,21 +462,21 @@ if (!response.ok || !result) {
 
               <div className="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
                 <p className="text-sm font-semibold text-slate-500">
-                  Closed or Fulfilled
+                  Shortlisted
                 </p>
 
-                <p className="mt-2 text-4xl font-extrabold text-slate-700">
-                  {closedResponses}
+                <p className="mt-2 text-4xl font-extrabold text-amber-600">
+                  {shortlistedResponses}
                 </p>
               </div>
 
               <div className="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
                 <p className="text-sm font-semibold text-slate-500">
-                  Quotes Supplied
+                  Accepted by Buyer
                 </p>
 
                 <p className="mt-2 text-4xl font-extrabold text-green-600">
-                  {quotedResponses}
+                  {acceptedResponses}
                 </p>
               </div>
             </div>
@@ -383,7 +495,9 @@ if (!response.ok || !result) {
                     id="response-search"
                     value={searchTerm}
                     onChange={(event) =>
-                      setSearchTerm(event.target.value)
+                      setSearchTerm(
+                        event.target.value
+                      )
                     }
                     placeholder="Search request title, category, company, quote, or message..."
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -417,129 +531,188 @@ if (!response.ok || !result) {
               </div>
 
               <p className="mt-4 text-sm text-slate-600">
-                Showing {filteredResponses.length} of{" "}
+                Showing{" "}
+                {filteredResponses.length} of{" "}
                 {responses.length} response
-                {responses.length === 1 ? "" : "s"}.
+                {responses.length === 1
+                  ? ""
+                  : "s"}
+                .
               </p>
             </div>
 
             <div className="mt-8 space-y-5">
               {filteredResponses.length > 0 ? (
-                filteredResponses.map((response) => {
-                  const status = getRequestStatus(
-                    response.request
-                  );
+                filteredResponses.map(
+                  (response) => {
+                    const requestStatus =
+                      getRequestStatus(
+                        response.request
+                      );
 
-                  return (
-                    <article
-                      key={response.id}
-                      className="overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-sm"
-                    >
-                      <div className="border-b border-slate-200 p-6 md:p-8">
-                        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-3">
-                              <span
-                                className={`rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wide ${status.className}`}
-                              >
-                                {status.label}
-                              </span>
+                    const buyerDecision =
+                      getBuyerDecision(
+                        response.status
+                      );
 
-                              {response.request?.category && (
-                                <span className="text-sm font-bold text-slate-500">
+                    return (
+                      <article
+                        key={response.id}
+                        className="overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-sm"
+                      >
+                        <div className="border-b border-slate-200 p-6 md:p-8">
+                          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-3">
+                                <span
+                                  className={`rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wide ${requestStatus.className}`}
+                                >
                                   {
-                                    response.request
-                                      .category
+                                    requestStatus.label
                                   }
                                 </span>
+
+                                <span
+                                  className={`rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wide ${buyerDecision.className}`}
+                                >
+                                  {
+                                    buyerDecision.label
+                                  }
+                                </span>
+
+                                {response.request
+                                  ?.category && (
+                                  <span className="text-sm font-bold text-slate-500">
+                                    {
+                                      response
+                                        .request
+                                        .category
+                                    }
+                                  </span>
+                                )}
+                              </div>
+
+                              <h2 className="mt-4 text-2xl font-extrabold md:text-3xl">
+                                {response.request
+                                  ?.title ||
+                                  "Buyer request no longer available"}
+                              </h2>
+
+                              {response.request
+                                ?.company_name && (
+                                <p className="mt-2 font-semibold text-slate-600">
+                                  Posted by{" "}
+                                  {
+                                    response
+                                      .request
+                                      .company_name
+                                  }
+                                </p>
                               )}
+
+                              <p className="mt-2 text-sm text-slate-500">
+                                Responded{" "}
+                                {formatDate(
+                                  response.created_at
+                                )}{" "}
+                                as{" "}
+                                {response.company_name ||
+                                  "NorthStock Seller"}
+                              </p>
                             </div>
 
-                            <h2 className="mt-4 text-2xl font-extrabold md:text-3xl">
-                              {response.request?.title ||
-                                "Buyer request no longer available"}
-                            </h2>
-
-                            {response.request
-                              ?.company_name && (
-                              <p className="mt-2 font-semibold text-slate-600">
-                                Posted by{" "}
-                                {
-                                  response.request
-                                    .company_name
-                                }
-                              </p>
+                            {response.request && (
+                              <a
+                                href={`/buyer-requests/${response.request.id}`}
+                                className="shrink-0 rounded-xl bg-slate-950 px-5 py-3 text-center text-sm font-extrabold text-white transition hover:bg-blue-700"
+                              >
+                                View Request
+                              </a>
                             )}
+                          </div>
+                        </div>
 
-                            <p className="mt-2 text-sm text-slate-500">
-                              Responded{" "}
-                              {formatDate(
-                                response.created_at
-                              )}{" "}
-                              as{" "}
-                              {response.company_name ||
-                                "NorthStock Seller"}
+                        <div className="p-6 md:p-8">
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="rounded-2xl bg-slate-50 p-5">
+                              <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                                Your Price or
+                                Quote
+                              </p>
+
+                              <p className="mt-2 text-lg font-extrabold">
+                                {response.price_quote ||
+                                  "Not specified"}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl bg-slate-50 p-5">
+                              <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                                Your Availability
+                              </p>
+
+                              <p className="mt-2 text-lg font-extrabold">
+                                {response.availability ||
+                                  "Not specified"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-5 rounded-2xl border border-slate-200 p-5">
+                            <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                              Your Message
+                            </p>
+
+                            <p className="mt-3 whitespace-pre-wrap leading-7 text-slate-700">
+                              {response.message}
                             </p>
                           </div>
 
-                          {response.request && (
-                            <a
-                              href={`/buyer-requests/${response.request.id}`}
-                              className="shrink-0 rounded-xl bg-slate-950 px-5 py-3 text-center text-sm font-extrabold text-white transition hover:bg-blue-700"
-                            >
-                              View Request
-                            </a>
+                          {requestStatus.active && (
+                            <p className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm font-semibold text-blue-900">
+                              This request is still
+                              active. The buyer can
+                              reply to the notification
+                              email to continue the
+                              conversation with you.
+                            </p>
+                          )}
+
+                          {response.status ===
+                            "accepted" && (
+                            <p className="mt-5 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-900">
+                              The buyer accepted your
+                              response. Check your
+                              email and reply directly
+                              to continue the
+                              conversation.
+                            </p>
+                          )}
+
+                          {response.status ===
+                            "shortlisted" && (
+                            <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+                              The buyer shortlisted
+                              your response and is
+                              still reviewing their
+                              options.
+                            </p>
+                          )}
+
+                          {response.status ===
+                            "declined" && (
+                            <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900">
+                              The buyer declined this
+                              response. It remains in
+                              your history for
+                              reference.
+                            </p>
                           )}
                         </div>
-                      </div>
-
-                      <div className="p-6 md:p-8">
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="rounded-2xl bg-slate-50 p-5">
-                            <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-                              Your Price or Quote
-                            </p>
-
-                            <p className="mt-2 text-lg font-extrabold">
-                              {response.price_quote ||
-                                "Not specified"}
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl bg-slate-50 p-5">
-                            <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-                              Your Availability
-                            </p>
-
-                            <p className="mt-2 text-lg font-extrabold">
-                              {response.availability ||
-                                "Not specified"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-5 rounded-2xl border border-slate-200 p-5">
-                          <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-                            Your Message
-                          </p>
-
-                          <p className="mt-3 whitespace-pre-wrap leading-7 text-slate-700">
-                            {response.message}
-                          </p>
-                        </div>
-
-                        {status.active && (
-                          <p className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm font-semibold text-blue-900">
-                            This request is still active. The
-                            buyer can reply to the notification
-                            email to continue the conversation
-                            with you.
-                          </p>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })
+                      </article>
+                    );
+                  }
+                )
               ) : (
                 <div className="rounded-3xl border border-slate-300 bg-white p-10 text-center shadow-sm">
                   <h2 className="text-2xl font-extrabold">
