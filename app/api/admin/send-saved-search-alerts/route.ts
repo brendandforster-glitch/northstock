@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { isAdminUser } from "@/lib/server/auth";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,8 +9,6 @@ const supabaseAdmin = createClient(
 );
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
-
-const allowedAdmins = ["brendandforster@gmail.com", "info@northstock.ca"];
 
 type SavedSearch = {
   id: string;
@@ -50,7 +49,7 @@ export async function POST(request: Request) {
     error: userError,
   } = await supabaseAdmin.auth.getUser(accessToken);
 
-  if (userError || !user?.email || !allowedAdmins.includes(user.email)) {
+  if (userError || !user || !(await isAdminUser(supabaseAdmin, user))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

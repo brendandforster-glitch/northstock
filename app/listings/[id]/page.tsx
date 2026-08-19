@@ -204,57 +204,37 @@ await supabase.from("listing_views").insert([
       return;
     }
 
-    const fullMessage = `
-Name: ${buyerName}
-Email: ${buyerEmail}
-Phone: ${buyerPhone || "Not provided"}
-
-Message:
-${buyerMessage}
-    `.trim();
-
-    const { error: leadError } = await supabase.from("leads").insert([
-      {
-        listing_id: listing.id,
-        buyer_email: buyerEmail,
-        message: fullMessage,
-      },
-    ]);
-
-    if (leadError) {
-      setSubmitting(false);
-      alert(`Lead insert failed: ${leadError.message}`);
-      return;
-    }
-
-    let emailMessage = "Email was not sent.";
-
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        setSubmitting(false);
+        window.location.href = "/login";
+        return;
+      }
+
       const emailResponse = await fetch("/api/send-quote-request-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          sellerEmail: company?.email || "info@northstock.ca",
-          buyerEmail,
           buyerName,
           buyerPhone,
           buyerMessage,
-          listingTitle: listing.title,
           listingId: listing.id,
         }),
       });
 
       const emailResult = await emailResponse.json();
 
-      if (!emailResponse.ok || emailResult.error) {
-        emailMessage = `Email failed: ${JSON.stringify(emailResult.error)}`;
-      } else {
-        emailMessage = "Email notification sent.";
-      }
+      if (!emailResponse.ok) throw new Error(emailResult.error || "Request failed.");
     } catch {
-      emailMessage = "Email failed due to a network or route error.";
+      setSubmitting(false);
+      alert("The quote request could not be sent. Please try again.");
+      return;
     }
 
     setSubmitting(false);
@@ -263,7 +243,7 @@ ${buyerMessage}
     setBuyerPhone("");
     setBuyerMessage("");
 
-    alert(`Quote request saved. ${emailMessage}`);
+    alert("Quote request sent successfully.");
   };
 
   if (loading) {
@@ -493,10 +473,10 @@ ${buyerMessage}
 
               <input
                 value={buyerEmail}
-                onChange={(e) => setBuyerEmail(e.target.value)}
                 placeholder="Email *"
                 type="email"
-                className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+                readOnly
+                className="rounded-xl border border-slate-300 bg-slate-100 p-4 text-slate-700"
               />
 
               <input

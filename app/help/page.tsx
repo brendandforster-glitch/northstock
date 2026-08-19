@@ -48,6 +48,11 @@ const guides = [
       "Review responses and manage the requests you have posted.",
     href: "/help/manage-buyer-requests",
   },
+  {
+    title: "Track Seller Responses",
+    description: "Review buyer decisions on proposals you submitted.",
+    href: "/help/track-seller-responses",
+  },
 ];
 
 export default function HelpPage() {

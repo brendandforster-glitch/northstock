@@ -499,6 +499,13 @@ export default function SellerPage() {
             </a>
 
             <a
+              href="/sellers/getting-started"
+              className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-950"
+            >
+              Seller Getting Started
+            </a>
+
+            <a
               href="/seller/leads"
               className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white"
             >

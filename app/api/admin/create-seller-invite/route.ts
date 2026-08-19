@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { isAdminUser } from "@/lib/server/auth";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,13 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const { data: adminUser } = await supabaseAdmin
-    .from("admin_users")
-    .select("id")
-    .eq("email", user.email)
-    .maybeSingle();
-
-  if (!adminUser) {
+  if (!(await isAdminUser(supabaseAdmin, user))) {
     return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
 

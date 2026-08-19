@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { CATEGORIES } from "@/lib/categories";
 
 
@@ -150,31 +151,90 @@ export default function AdminUploadPage() {
     );
   }
 
-  function downloadExcelTemplate() {
-    const template = [
-      {
-        title: "Example Office Chair",
-        category: "Office Furniture",
-        description: "Used ergonomic office chair in good condition.",
-        quantity: 10,
-        city: "Vancouver",
-        province: "British Columbia",
-        price: 100,
-        price_note: "$100 each or bulk pricing available",
-        condition: "Used",
-        brand: "Herman Miller",
-        model: "Aeron",
-        sku: "CHAIR-001",
-        image_url: "https://example.com/image.jpg",
-        expires_at: "",
-      },
-    ];
+  async function downloadExcelTemplate() {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "NorthStock";
+    workbook.title = "NorthStock Admin Inventory Upload Template";
 
-    const worksheet = XLSX.utils.json_to_sheet(template);
-    const workbook = XLSX.utils.book_new();
+    const worksheet = workbook.addWorksheet("Inventory Template", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
+    const categorySheet = workbook.addWorksheet("Allowed Categories", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "NorthStock Template");
-    XLSX.writeFile(workbook, "northstock-admin-upload-template.xlsx");
+    worksheet.columns = [
+      ["title", 32], ["category", 30], ["description", 44], ["quantity", 12],
+      ["city", 20], ["province", 22], ["price", 14], ["price_note", 30],
+      ["condition", 14], ["brand", 20], ["model", 18], ["sku", 18],
+      ["image_url", 40], ["expires_at", 18],
+    ].map(([header, width]) => ({ header: String(header), key: String(header), width: Number(width) }));
+
+    const examples = CATEGORIES.map((category, index) => ({
+      title: `Example ${category} Item`,
+      category,
+      description: `Example ${category.toLowerCase()} listing. Replace or delete this row.`,
+      quantity: index + 2,
+      city: index % 2 ? "Toronto" : "Vancouver",
+      province: index % 2 ? "Ontario" : "British Columbia",
+      price: 1000 + index * 250,
+      price_note: index === 0 ? "Volume pricing available" : "",
+      condition: index % 2 ? "New" : "Used",
+      brand: "Example Brand",
+      model: `MODEL-${index + 1}`,
+      sku: `SAMPLE-${index + 1}`,
+      image_url: "",
+      expires_at: "",
+    }));
+    worksheet.addRows(examples);
+    worksheet.autoFilter = "A1:N1";
+
+    worksheet.getRow(1).height = 30;
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF020617" } };
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1 && rowNumber % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFF6FF" } };
+        });
+      }
+      row.eachCell((cell) => {
+        cell.alignment = { vertical: "top", wrapText: true };
+      });
+    });
+
+    categorySheet.columns = [{ header: "Allowed category", key: "category", width: 34 }];
+    categorySheet.addRows(CATEGORIES.map((category) => ({ category })));
+    categorySheet.getRow(1).eachCell((cell) => {
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF2563EB" } };
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    });
+    for (let row = 2; row <= 500; row += 1) {
+      worksheet.getCell(`B${row}`).dataValidation = {
+        type: "list",
+        allowBlank: false,
+        formulae: [`'Allowed Categories'!$A$2:$A$${CATEGORIES.length + 1}`],
+      };
+      worksheet.getCell(`I${row}`).dataValidation = {
+        type: "list",
+        allowBlank: true,
+        formulae: ['"New,Used"'],
+      };
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer as BlobPart], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "northstock-admin-upload-template.xlsx";
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   async function handleExcelUpload(e: React.ChangeEvent<HTMLInputElement>) {

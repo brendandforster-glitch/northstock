@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -54,17 +54,52 @@ export async function POST(request: Request) {
     "Created At": item.created_at || "",
   }));
 
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "NorthStock";
+  workbook.company = "NorthStock";
+  workbook.title = "NorthStock Inventory Export";
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
-
-  const buffer = XLSX.write(workbook, {
-    type: "buffer",
-    bookType: "xlsx",
+  const worksheet = workbook.addWorksheet("Inventory", {
+    views: [{ state: "frozen", ySplit: 1 }],
   });
 
-  return new Response(buffer, {
+  const headers = Object.keys(rows[0] || {
+    Title: "", Category: "", Quantity: "", Condition: "", Price: "",
+    "Price Note": "", City: "", "Province / State": "", Brand: "",
+    Model: "", SKU: "", Description: "", "Image URL": "", Status: "",
+    "Expires At": "", "Created At": "",
+  });
+
+  worksheet.columns = headers.map((header) => ({
+    header,
+    key: header,
+    width: Math.min(48, Math.max(14, header.length + 4)),
+  }));
+  worksheet.getColumn("Description").width = 44;
+  worksheet.getColumn("Image URL").width = 42;
+  worksheet.addRows(rows);
+  worksheet.autoFilter = `A1:${worksheet.getColumn(headers.length).letter}1`;
+  worksheet.getRow(1).height = 30;
+  worksheet.getRow(1).eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF020617" } };
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+  });
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber > 1 && rowNumber % 2 === 0) {
+      row.eachCell((cell) => {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFF6FF" } };
+      });
+    }
+    row.eachCell((cell) => {
+      cell.alignment = { vertical: "top", wrapText: true };
+      cell.border = { bottom: { style: "thin", color: { argb: "FFE2E8F0" } } };
+    });
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+
+  return new Response(buffer as BodyInit, {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

@@ -14,13 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  applicationName: "NorthStock",
   title: {
     default: "NorthStock",
     template: "%s | NorthStock",
   },
 
   description:
-    "NorthStock is North America's commercial inventory marketplace. Buy and sell office furniture, restaurant equipment, contractor tools, and surplus business inventory.",
+    "NorthStock is North America's free commercial inventory marketplace for office furniture, restaurant equipment, hotel supplies, commercial gym equipment, and more.",
 
   keywords: [
     "commercial inventory",
@@ -28,13 +29,17 @@ export const metadata: Metadata = {
     "surplus inventory",
     "office furniture",
     "restaurant equipment",
-    "contractor tools",
+    "hotel supplies",
+    "commercial gym equipment",
     "used equipment",
     "industrial inventory",
     "NorthStock",
   ],
 
   metadataBase: new URL("https://northstock.ca"),
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+  icons: { icon: "/northstock-logo.png", apple: "/northstock-logo.png" },
 
   openGraph: {
     title: "NorthStock",
@@ -42,12 +47,14 @@ export const metadata: Metadata = {
     url: "https://northstock.ca",
     siteName: "NorthStock",
     type: "website",
+    images: [{ url: "/northstock-logo.png", alt: "NorthStock" }],
   },
 
   twitter: {
     card: "summary_large_image",
     title: "NorthStock",
     description: "North America's Commercial Inventory Marketplace",
+    images: ["/northstock-logo.png"],
   },
 };
 

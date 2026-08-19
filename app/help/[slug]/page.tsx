@@ -133,6 +133,17 @@ const guides: Record<
       "Delete a request only when you no longer need it. Deleting also removes its associated supplier responses and cannot be undone.",
     ],
   },
+  "track-seller-responses": {
+    title: "Track Your Buyer Request Responses",
+    intro: "Sellers can review every buyer request they answered and see whether a proposal is pending, shortlisted, accepted, or declined.",
+    steps: [
+      "Log in and open Dashboard.",
+      "Select My Responses from the account navigation or My Buyer Responses from the dashboard.",
+      "Review the request title, your quote, availability, response date, and current decision status.",
+      "Open the original buyer request when it is still active to review its details.",
+      "If the buyer replies by email, continue the conversation directly and verify all transaction details independently.",
+    ],
+  },
 };
 
 export default async function HelpGuidePage({

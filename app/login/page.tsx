@@ -115,8 +115,11 @@ export default function LoginPage() {
           )}
 
           {mode === "signup" && (
-            <p className="text-center text-sm font-medium text-slate-700">
-              Already have an account?{" "}
+            <div className="space-y-3 text-center text-sm font-medium text-slate-700">
+              <p>
+                By creating an account, you agree to the <a href="/terms" className="font-bold text-blue-600">Terms</a> and acknowledge the <a href="/privacy" className="font-bold text-blue-600">Privacy Policy</a>.
+              </p>
+              <p>Already have an account?{" "}
               <button
                 type="button"
                 onClick={() => setMode("login")}
@@ -124,7 +127,8 @@ export default function LoginPage() {
               >
                 Log in instead
               </button>
-            </p>
+              </p>
+            </div>
           )}
         </div>
       </div>

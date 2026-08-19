@@ -642,21 +642,17 @@ instructionsSheet.addRows([
     }
 
     if (insertedListing) {
+      const { data: sessionData } = await supabase.auth.getSession();
       await fetch("/api/send-saved-search-alerts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(sessionData.session?.access_token
+            ? { Authorization: `Bearer ${sessionData.session.access_token}` }
+            : {}),
         },
         body: JSON.stringify({
           listingId: insertedListing.id,
-          title: insertedListing.title,
-          category: insertedListing.category,
-          city: insertedListing.city,
-          province: insertedListing.province,
-          brand: insertedListing.brand,
-          model: insertedListing.model,
-          sku: insertedListing.sku,
-          description: insertedListing.description,
         }),
       });
     }

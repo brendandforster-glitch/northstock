@@ -726,7 +726,7 @@ setBuyerRequests(
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {CATEGORY_DETAILS.map((category) => (
             <a
-              href="/listings"
+              href={`/listings?category=${encodeURIComponent(category.title)}`}
               key={category.title}
               className="rounded-3xl border bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
             >
@@ -950,8 +950,9 @@ setBuyerRequests(
                 </p>
 
                 <p>
-  <a href="/help">Help Centre</a>
-</p>
+                  <a href="/help">Help Centre</a>
+                </p>
+                <p><a href="/sellers/getting-started">Seller Getting Started</a></p>
               </div>
             </div>
 
@@ -993,8 +994,13 @@ setBuyerRequests(
             </div>
           </div>
 
-          <div className="mt-10 border-t pt-6 text-sm text-slate-500">
-            © 2026 NorthStock. All rights reserved.
+          <div className="mt-10 flex flex-col gap-3 border-t pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+            <p>© 2026 NorthStock. All rights reserved.</p>
+            <div className="flex flex-wrap gap-5">
+              <a href="/terms" className="hover:text-slate-950">Terms</a>
+              <a href="/privacy" className="hover:text-slate-950">Privacy</a>
+              <a href="/marketplace-guidelines" className="hover:text-slate-950">Marketplace Guidelines</a>
+            </div>
           </div>
         </div>
       </footer>
