@@ -1,6 +1,7 @@
 "use client";
 
 import { CATEGORIES } from "@/lib/categories";
+import { REGION_GROUPS } from "@/lib/regions";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 
@@ -89,7 +90,7 @@ export default function NewBuyerRequestPage() {
         quantity: quantity ? Number(quantity) : null,
         budget: budget.trim() || null,
         city: city.trim(),
-        province: province.trim(),
+        province,
         is_public: isPublic,
       },
     ]);
@@ -161,17 +162,11 @@ export default function NewBuyerRequestPage() {
               Sell Inventory
             </a>
 
-            <a
-              href="/help"
-              className="transition hover:text-blue-600"
-            >
+            <a href="/help" className="transition hover:text-blue-600">
               Help
             </a>
 
-            <a
-              href="/#contact"
-              className="transition hover:text-blue-600"
-            >
+            <a href="/#contact" className="transition hover:text-blue-600">
               Contact
             </a>
           </nav>
@@ -192,6 +187,7 @@ export default function NewBuyerRequestPage() {
             </a>
 
             <button
+              type="button"
               onClick={handleLogout}
               className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
             >
@@ -337,13 +333,24 @@ export default function NewBuyerRequestPage() {
             <label>
               <span className="font-bold">Province or state *</span>
 
-              <input
+              <select
                 value={province}
                 onChange={(e) => setProvince(e.target.value)}
-                placeholder="Example: British Columbia"
-                className="mt-2 w-full rounded-xl border border-slate-300 p-4"
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-4"
                 required
-              />
+              >
+                <option value="">Select a province or state</option>
+
+                {REGION_GROUPS.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.regions.map((region) => (
+                      <option key={region} value={region}>
+                        {region}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </label>
 
             <label className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-5 md:col-span-2">
