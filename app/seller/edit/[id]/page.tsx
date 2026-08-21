@@ -1,24 +1,9 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { CATEGORIES } from "@/lib/categories";
-
-
-const regions = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
-  "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
-  "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
-  "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
-  "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
-  "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
-  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia",
-  "Washington", "West Virginia", "Wisconsin", "Wyoming",
-  "British Columbia", "Alberta", "Saskatchewan", "Manitoba", "Ontario",
-  "Quebec", "New Brunswick", "Nova Scotia", "Prince Edward Island",
-  "Newfoundland and Labrador", "Yukon", "Northwest Territories", "Nunavut",
-];
+import { REGION_GROUPS } from "@/lib/regions";
+import { supabase } from "@/lib/supabase";
+import { use, useEffect, useState } from "react";
 
 export default function EditListingPage({
   params,
@@ -136,7 +121,10 @@ export default function EditListingPage({
     setUploadingImage(false);
   }
 
-  async function getCoordinates(cityValue: string, provinceValue: string) {
+  async function getCoordinates(
+    cityValue: string,
+    provinceValue: string
+  ) {
     const { data } = await supabase
       .from("city_coordinates")
       .select("latitude, longitude")
@@ -154,7 +142,9 @@ export default function EditListingPage({
     e.preventDefault();
 
     if (!title || !category || !quantity || !city || !province) {
-      alert("Please complete title, category, quantity, city, and province/state.");
+      alert(
+        "Please complete title, category, quantity, city, and province/state."
+      );
       return;
     }
 
@@ -180,7 +170,9 @@ export default function EditListingPage({
         longitude: coordinates.longitude,
         description,
         image_url: imageUrl || null,
-        expires_at: expiresAt ? new Date(`${expiresAt}T23:59:59`).toISOString() : null,
+        expires_at: expiresAt
+          ? new Date(`${expiresAt}T23:59:59`).toISOString()
+          : null,
       })
       .eq("id", id);
 
@@ -195,6 +187,12 @@ export default function EditListingPage({
     window.location.href = "/seller";
   }
 
+  const hasLegacyProvince =
+    province !== "" &&
+    !REGION_GROUPS.some((group) =>
+      group.regions.some((region) => region === province)
+    );
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] p-10">
@@ -206,7 +204,10 @@ export default function EditListingPage({
   return (
     <main className="min-h-screen bg-[#f7f8fa]">
       <div className="mx-auto max-w-4xl px-6 py-10">
-        <a href="/seller" className="text-sm font-semibold text-slate-700">
+        <a
+          href="/seller"
+          className="text-sm font-semibold text-slate-700"
+        >
           ← Back to Seller Dashboard
         </a>
 
@@ -229,8 +230,11 @@ export default function EditListingPage({
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
           >
             <option value="">Select Category *</option>
+
             {CATEGORIES.map((item) => (
-              <option key={item}>{item}</option>
+              <option key={item} value={item}>
+                {item}
+              </option>
             ))}
           </select>
 
@@ -239,6 +243,7 @@ export default function EditListingPage({
             onChange={(e) => setQuantity(e.target.value)}
             placeholder="Quantity *"
             type="number"
+            min="0"
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
           />
 
@@ -247,6 +252,8 @@ export default function EditListingPage({
             onChange={(e) => setPrice(e.target.value)}
             placeholder="Numeric Price, e.g. 100"
             type="number"
+            min="0"
+            step="0.01"
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
           />
 
@@ -295,11 +302,23 @@ export default function EditListingPage({
           <select
             value={province}
             onChange={(e) => setProvince(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
+            className="w-full rounded-xl border border-slate-300 bg-white p-4 text-slate-950"
+            required
           >
             <option value="">Province / State *</option>
-            {regions.map((item) => (
-              <option key={item}>{item}</option>
+
+            {hasLegacyProvince && (
+              <option value={province}>{province}</option>
+            )}
+
+            {REGION_GROUPS.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.regions.map((region) => (
+                  <option key={region} value={region}>
+                    {region}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
 
@@ -314,10 +333,13 @@ export default function EditListingPage({
 
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) uploadListingImage(file);
+
+                if (file) {
+                  uploadListingImage(file);
+                }
               }}
               className="mt-4 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-950"
             />
@@ -346,12 +368,22 @@ export default function EditListingPage({
             )}
           </div>
 
-          <input
-            type="date"
-            value={expiresAt}
-            onChange={(e) => setExpiresAt(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
-          />
+          <div>
+            <label
+              htmlFor="expiresAt"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Listing Expiration Date
+            </label>
+
+            <input
+              id="expiresAt"
+              type="date"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
+            />
+          </div>
 
           <textarea
             rows={6}
@@ -364,7 +396,7 @@ export default function EditListingPage({
           <button
             type="submit"
             disabled={saving || uploadingImage}
-            className="w-full rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50"
+            className="w-full rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

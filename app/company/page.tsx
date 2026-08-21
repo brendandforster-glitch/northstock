@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { REGION_GROUPS } from "@/lib/regions";
 import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 
 export default function CompanyPage() {
   const [loading, setLoading] = useState(true);
@@ -80,7 +81,7 @@ export default function CompanyPage() {
       setCity(company.city || "");
       setProvince(company.province || "");
       setLogoUrl(company.logo_url || "");
-setBannerUrl(company.banner_url || "");
+      setBannerUrl(company.banner_url || "");
     } else {
       setCompanyId(null);
       setCompanyName("");
@@ -91,7 +92,7 @@ setBannerUrl(company.banner_url || "");
       setCity("");
       setProvince("");
       setLogoUrl("");
-setBannerUrl("");
+      setBannerUrl("");
     }
 
     setLoading(false);
@@ -155,15 +156,15 @@ setBannerUrl("");
 
     const payload = {
       user_id: user.id,
-      company_name: companyName,
-      description,
-      website,
-      phone,
-      email,
-      city,
+      company_name: companyName.trim(),
+      description: description.trim(),
+      website: website.trim(),
+      phone: phone.trim(),
+      email: email.trim(),
+      city: city.trim(),
       province,
-      logo_url: logoUrl,
-banner_url: bannerUrl,
+      logo_url: logoUrl.trim(),
+      banner_url: bannerUrl.trim(),
     };
 
     let error;
@@ -192,33 +193,40 @@ banner_url: bannerUrl,
   }
 
   const completionItems = [
-  companyName,
-  description,
-  website,
-  phone,
-  email,
-  city,
-  province,
-  logoUrl,
-  bannerUrl,
-];
+    companyName,
+    description,
+    website,
+    phone,
+    email,
+    city,
+    province,
+    logoUrl,
+    bannerUrl,
+  ];
 
-const completedFields = completionItems.filter(
-  (item) => item && item.toString().trim() !== ""
-).length;
+  const completedFields = completionItems.filter(
+    (item) => item && item.toString().trim() !== ""
+  ).length;
 
-const completionPercent = Math.round(
-  (completedFields / completionItems.length) * 100
-);
+  const completionPercent = Math.round(
+    (completedFields / completionItems.length) * 100
+  );
 
-const companyStrength =
-  completionPercent >= 90
-    ? "Excellent"
-    : completionPercent >= 70
-    ? "Strong"
-    : completionPercent >= 50
-    ? "Getting Started"
-    : "Needs Work";
+  const companyStrength =
+    completionPercent >= 90
+      ? "Excellent"
+      : completionPercent >= 70
+        ? "Strong"
+        : completionPercent >= 50
+          ? "Getting Started"
+          : "Needs Work";
+
+  const hasLegacyProvince =
+    province !== "" &&
+    !REGION_GROUPS.some((group) =>
+      group.regions.some((region) => region === province)
+    );
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] p-10">
@@ -257,32 +265,39 @@ const companyStrength =
       </header>
 
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <h1 className="text-4xl font-bold text-slate-950">Company Profile</h1>
+        <h1 className="text-4xl font-bold text-slate-950">
+          Company Profile
+        </h1>
 
         <p className="mt-2 text-slate-700">
           Create or update your public seller profile for NorthStock.
         </p>
+
         <div className="mt-6 rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
-  <div className="flex items-center justify-between">
-    <div>
-      <p className="font-bold text-slate-950">Company Profile Strength</p>
-      <p className="mt-1 text-sm text-slate-600">
-        {companyStrength} · {completedFields} of {completionItems.length} sections completed
-      </p>
-    </div>
+          <div className="flex items-center justify-between gap-5">
+            <div>
+              <p className="font-bold text-slate-950">
+                Company Profile Strength
+              </p>
 
-    <p className="text-2xl font-bold text-slate-950">
-      {completionPercent}%
-    </p>
-  </div>
+              <p className="mt-1 text-sm text-slate-600">
+                {companyStrength} · {completedFields} of{" "}
+                {completionItems.length} sections completed
+              </p>
+            </div>
 
-  <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200">
-    <div
-      className="h-full rounded-full bg-slate-950 transition-all"
-      style={{ width: `${completionPercent}%` }}
-    />
-  </div>
-</div>
+            <p className="text-2xl font-bold text-slate-950">
+              {completionPercent}%
+            </p>
+          </div>
+
+          <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200">
+            <div
+              className="h-full rounded-full bg-slate-950 transition-all"
+              style={{ width: `${completionPercent}%` }}
+            />
+          </div>
+        </div>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
           <div className="rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
@@ -332,12 +347,27 @@ const companyStrength =
                   className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
                 />
 
-                <input
+                <select
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
-                  placeholder="Province / State"
-                  className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
-                />
+                  className="rounded-xl border border-slate-300 bg-white p-4 text-slate-950"
+                >
+                  <option value="">Province / State</option>
+
+                  {hasLegacyProvince && (
+                    <option value={province}>{province}</option>
+                  )}
+
+                  {REGION_GROUPS.map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.regions.map((region) => (
+                        <option key={region} value={region}>
+                          {region}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
               </div>
 
               <div className="rounded-2xl border border-slate-300 bg-slate-50 p-5">
@@ -354,7 +384,10 @@ const companyStrength =
                   accept="image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) uploadLogo(file);
+
+                    if (file) {
+                      uploadLogo(file);
+                    }
                   }}
                   className="mt-4 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-950"
                 />
@@ -371,25 +404,28 @@ const companyStrength =
                   placeholder="Logo Image URL"
                   className="mt-4 w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
                 />
+
                 <div className="mt-5">
-  <label className="block text-sm font-bold text-slate-950">
-    Banner Image URL
-  </label>
+                  <label className="block text-sm font-bold text-slate-950">
+                    Banner Image URL
+                  </label>
 
-  <p className="mt-1 text-sm text-slate-600">
-    Optional. This image will appear across the top of your public company page.
-  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Optional. This image will appear across the top of your
+                    public company page.
+                  </p>
 
-  <input
-    value={bannerUrl}
-    onChange={(e) => setBannerUrl(e.target.value)}
-    placeholder="https://..."
-    className="mt-3 w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
-  />
-</div>
+                  <input
+                    value={bannerUrl}
+                    onChange={(e) => setBannerUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="mt-3 w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+                  />
+                </div>
               </div>
 
               <button
+                type="button"
                 onClick={saveCompany}
                 disabled={saving || uploadingLogo}
                 className="rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50"
@@ -400,69 +436,70 @@ const companyStrength =
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-sm">
-  <div
-    className="h-28 bg-slate-950 bg-cover bg-center"
-    style={
-      bannerUrl
-        ? {
-            backgroundImage: `url(${bannerUrl})`,
-          }
-        : undefined
-    }
-  />
+            <div
+              className="h-28 bg-slate-950 bg-cover bg-center"
+              style={
+                bannerUrl
+                  ? {
+                      backgroundImage: `url(${bannerUrl})`,
+                    }
+                  : undefined
+              }
+            />
 
-  <div className="p-6">
-    <p className="text-sm font-semibold text-slate-500">
-      Public Profile Preview
-    </p>
+            <div className="p-6">
+              <p className="text-sm font-semibold text-slate-500">
+                Public Profile Preview
+              </p>
 
-    <div className="-mt-16 flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
-      {logoUrl ? (
-        <img
-          src={logoUrl}
-          alt={companyName || "Company logo"}
-          className="h-full w-full object-contain p-2"
-        />
-      ) : (
-        <span className="text-3xl font-bold text-slate-400">
-          {companyName ? companyName.slice(0, 1) : "N"}
-        </span>
-      )}
-    </div>
+              <div className="-mt-16 flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt={companyName || "Company logo"}
+                    className="h-full w-full object-contain p-2"
+                  />
+                ) : (
+                  <span className="text-3xl font-bold text-slate-400">
+                    {companyName ? companyName.slice(0, 1) : "N"}
+                  </span>
+                )}
+              </div>
 
-    <h2 className="mt-5 text-2xl font-bold text-slate-950">
-      {companyName || "Company Name"}
-    </h2>
+              <h2 className="mt-5 text-2xl font-bold text-slate-950">
+                {companyName || "Company Name"}
+              </h2>
 
-    {(city || province) && (
-      <p className="mt-2 text-sm text-slate-600">
-        📍 {city}
-        {province ? `, ${province}` : ""}
-      </p>
-    )}
+              {(city || province) && (
+                <p className="mt-2 text-sm text-slate-600">
+                  📍 {city}
+                  {province ? `, ${province}` : ""}
+                </p>
+              )}
 
-    <p className="mt-4 text-sm leading-6 text-slate-700">
-      {description || "Company description will appear here."}
-    </p>
+              <p className="mt-4 text-sm leading-6 text-slate-700">
+                {description ||
+                  "Company description will appear here."}
+              </p>
 
-    <div className="mt-5 space-y-2 text-sm text-slate-700">
-      {website && <p>🌐 {website}</p>}
-      {phone && <p>📞 {phone}</p>}
-      {email && <p>✉️ {email}</p>}
-    </div>
+              <div className="mt-5 space-y-2 text-sm text-slate-700">
+                {website && <p>🌐 {website}</p>}
+                {phone && <p>📞 {phone}</p>}
+                {email && <p>✉️ {email}</p>}
+              </div>
 
-    {companyId && (
-      <a
-        href={`/company/${companyId}`}
-        className="mt-6 inline-block rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-950"
-      >
-        View Public Profile
-      </a>
-    )}
-  </div>
+              {companyId && (
+                <a
+                  href={`/company/${companyId}`}
+                  className="mt-6 inline-block rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-950"
+                >
+                  View Public Profile
+                </a>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </main>
-);
+    </main>
+  );
 }
