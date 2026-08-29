@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { COUNTRY_OPTIONS } from "@/lib/international";
 
 type Company = {
   id: string;
@@ -24,6 +25,7 @@ export default function AdminInviteSellerPage() {
   const [website, setWebsite] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
+  const [countryCode, setCountryCode] = useState("");
 
   const [inviteLink, setInviteLink] = useState("");
   const [saving, setSaving] = useState(false);
@@ -70,6 +72,7 @@ export default function AdminInviteSellerPage() {
     setWebsite("");
     setCity("");
     setProvince("");
+    setCountryCode("");
     setInviteLink("");
   }
 
@@ -131,6 +134,7 @@ export default function AdminInviteSellerPage() {
         website,
         city,
         province,
+        countryCode,
       }),
     });
 
@@ -267,6 +271,19 @@ export default function AdminInviteSellerPage() {
                 />
 
                 <div className="grid gap-5 md:grid-cols-2">
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className="rounded-xl border border-slate-300 bg-white p-4 text-slate-950"
+                  >
+                    <option value="">Select Country</option>
+                    {COUNTRY_OPTIONS.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name} ({country.code})
+                      </option>
+                    ))}
+                  </select>
+
                   <input
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
@@ -277,7 +294,7 @@ export default function AdminInviteSellerPage() {
                   <input
                     value={province}
                     onChange={(e) => setProvince(e.target.value)}
-                    placeholder="Province / State"
+                    placeholder="Region / State / Province"
                     className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
                   />
                 </div>

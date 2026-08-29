@@ -3,6 +3,11 @@
 import { CATEGORIES } from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import {
+  COUNTRY_OPTIONS,
+  formatCurrency,
+  formatLocation,
+} from "@/lib/international";
 
 type Listing = {
   id: string;
@@ -11,6 +16,8 @@ type Listing = {
   quantity: number;
   city: string;
   province: string | null;
+  country_code: string | null;
+  currency_code: string | null;
   description: string;
   image_url: string | null;
   status: string | null;
@@ -30,30 +37,13 @@ type Listing = {
 
 const conditions = ["New", "Used", "Refurbished"];
 
-const regions = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
-  "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
-  "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
-  "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
-  "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
-  "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
-  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia",
-  "Washington", "West Virginia", "Wisconsin", "Wyoming",
-  "British Columbia", "Alberta", "Saskatchewan", "Manitoba", "Ontario",
-  "Quebec", "New Brunswick", "Nova Scotia", "Prince Edward Island",
-  "Newfoundland and Labrador", "Yukon", "Northwest Territories", "Nunavut",
-];
-
-function formatPrice(price: number | null, priceNote?: string | null) {
+function formatPrice(
+  price: number | null,
+  priceNote?: string | null,
+  currencyCode?: string | null
+) {
   if (priceNote) return priceNote;
-  if (price === null || price === undefined) return "Contact for pricing";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price);
+  return formatCurrency(price, currencyCode);
 }
 
 function formatDate(dateString: string | null) {
@@ -70,6 +60,7 @@ export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
   const [citySearch, setCitySearch] = useState("");
   const [radiusKm, setRadiusKm] = useState("");
   const [keywordSearch, setKeywordSearch] = useState("");
@@ -139,7 +130,8 @@ export default function ListingsPage() {
     radiusFilter = radiusKm,
     keywordFilter = keywordSearch,
     categoryFilter = selectedCategories,
-    conditionFilter = selectedCondition
+    conditionFilter = selectedCondition,
+    countryFilter = selectedCountry
   ) => {
     setLoading(true);
 
@@ -153,6 +145,13 @@ export default function ListingsPage() {
     }
 
     if (cityFilter.trim() && radiusFilter) {
+      if (!["CA", "US"].includes(countryFilter)) {
+        setListings([]);
+        setLoading(false);
+        alert("Radius search currently requires Canada or United States as the selected country.");
+        return;
+      }
+
       const { data: cityData } = await supabase
         .from("city_coordinates")
         .select("latitude, longitude")
@@ -163,7 +162,7 @@ export default function ListingsPage() {
       if (!cityData) {
         setListings([]);
         setLoading(false);
-        alert("City coordinates not found. Try selecting the matching province/state.");
+        alert("City coordinates not found. Try entering the matching region, state, or province.");
         return;
       }
 
@@ -181,6 +180,10 @@ export default function ListingsPage() {
             (item) => item.province === regionFilter
           );
         }
+
+        filteredData = filteredData.filter(
+          (item) => item.country_code === countryFilter
+        );
 
         if (categoryFilter.length > 0) {
           filteredData = filteredData.filter((item) =>
@@ -216,6 +219,10 @@ export default function ListingsPage() {
       query = query.eq("province", regionFilter);
     }
 
+    if (countryFilter) {
+      query = query.eq("country_code", countryFilter);
+    }
+
     if (cityFilter.trim()) {
       query = query.ilike("city", `%${cityFilter.trim()}%`);
     }
@@ -245,7 +252,7 @@ export default function ListingsPage() {
     const homepageSearch = params.get("search") || "";
 
     setKeywordSearch(homepageSearch);
-    loadListings("", "", "", homepageSearch, [], "");
+    loadListings("", "", "", homepageSearch, [], "", "");
   }, []);
 
   const applyFilters = () => {
@@ -255,12 +262,14 @@ export default function ListingsPage() {
       radiusKm,
       keywordSearch,
       selectedCategories,
-      selectedCondition
+      selectedCondition,
+      selectedCountry
     );
   };
 
   const clearFilters = () => {
     setSelectedRegion("");
+    setSelectedCountry("");
     setCitySearch("");
     setRadiusKm("");
     setKeywordSearch("");
@@ -269,7 +278,7 @@ export default function ListingsPage() {
 
     window.history.replaceState({}, "", "/listings");
 
-    loadListings("", "", "", "", [], "");
+    loadListings("", "", "", "", [], "", "");
   };
 
   const saveCurrentSearch = async () => {
@@ -294,6 +303,9 @@ export default function ListingsPage() {
       selectedCondition ? selectedCondition : "",
       citySearch ? citySearch : "",
       selectedRegion ? selectedRegion : "",
+      selectedCountry
+        ? COUNTRY_OPTIONS.find((item) => item.code === selectedCountry)?.name || selectedCountry
+        : "",
       radiusKm ? `${radiusKm} km` : "",
     ].filter(Boolean);
 
@@ -309,6 +321,7 @@ export default function ListingsPage() {
         category: categoryName,
         city: citySearch || "",
         province: selectedRegion || "",
+        country_code: selectedCountry || null,
         radius_km: radiusKm ? Number(radiusKm) : null,
         keyword: keywordSearch || "",
         email_alerts_enabled: true,
@@ -451,21 +464,34 @@ export default function ListingsPage() {
 
             <div>
               <p className="mb-3 text-sm font-semibold text-slate-800">
-                Province / State
+                Country
               </p>
 
               <select
-                value={selectedRegion}
-                onChange={(e) => setSelectedRegion(e.target.value)}
+                value={selectedCountry}
+                onChange={(e) => setSelectedCountry(e.target.value)}
                 className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950"
               >
-                <option value="">All Provinces / States</option>
-                {regions.map((region) => (
-                  <option key={region} value={region}>
-                    {region}
+                <option value="">All Countries</option>
+                {COUNTRY_OPTIONS.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name} ({country.code})
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <p className="mb-3 text-sm font-semibold text-slate-800">
+                Region / State / Province
+              </p>
+
+              <input
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                placeholder="Any region"
+                className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-950 placeholder:text-slate-500"
+              />
             </div>
 
             <div>
@@ -499,7 +525,7 @@ export default function ListingsPage() {
               </select>
 
               <p className="mt-2 text-xs text-slate-500">
-                Radius search requires a city and matching province/state.
+                Radius search currently supports Canada and the United States and requires a matching city and region.
               </p>
             </div>
 
@@ -542,7 +568,9 @@ export default function ListingsPage() {
                   ? `Showing listings within ${radiusKm} km of ${citySearch}`
                   : selectedRegion
                   ? `Showing active listings in ${selectedRegion}`
-                  : "Showing active, non-expired NorthStock listings across North America"}
+                  : selectedCountry
+                  ? `Showing active listings in ${COUNTRY_OPTIONS.find((item) => item.code === selectedCountry)?.name || selectedCountry}`
+                  : "Showing active, non-expired NorthStock listings worldwide"}
               </p>
             </div>
 
@@ -578,7 +606,7 @@ export default function ListingsPage() {
                     <h2 className="mt-1 text-xl font-bold">{item.title}</h2>
 
                     <p className="mt-2 text-lg font-bold text-slate-950">
-                      {formatPrice(item.price, item.price_note)}
+                      {formatPrice(item.price, item.price_note, item.currency_code)}
                     </p>
 
                     {item.company_name && item.company_id && (
@@ -591,8 +619,7 @@ export default function ListingsPage() {
                     )}
 
                     <p className="mt-2 text-slate-700">
-                      {item.city}
-                      {item.province ? `, ${item.province}` : ""}
+                      {formatLocation(item.city, item.province, item.country_code)}
                     </p>
 
                     <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">

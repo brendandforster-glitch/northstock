@@ -2,6 +2,7 @@
 
 import { CATEGORIES } from "@/lib/categories";
 import { supabase } from "@/lib/supabase";
+import { formatLocation, getCountryName } from "@/lib/international";
 import { useEffect, useMemo, useState } from "react";
 
 type BuyerRequest = {
@@ -14,6 +15,8 @@ type BuyerRequest = {
   budget: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
+  currency_code: string | null;
   expires_at: string;
   created_at: string;
 };
@@ -38,7 +41,7 @@ export default function BuyerRequestsPage() {
       const { data, error } = await supabase
         .from("buyer_requests")
         .select(
-          "id, company_name, title, category, description, quantity, budget, city, province, expires_at, created_at"
+          "id, company_name, title, category, description, quantity, budget, city, province, country_code, currency_code, expires_at, created_at"
         )
         .eq("status", "active")
         .eq("fulfilled", false)
@@ -72,6 +75,7 @@ export default function BuyerRequestsPage() {
         request.company_name,
         request.city,
         request.province,
+        getCountryName(request.country_code),
         request.category,
       ]
         .filter(Boolean)
@@ -198,7 +202,7 @@ export default function BuyerRequestsPage() {
 
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
             Browse active commercial inventory requests from businesses
-            across Canada and the United States. Have what they need?
+            around the world. Have what they need?
             Connect through NorthStock.
           </p>
 
@@ -307,11 +311,9 @@ export default function BuyerRequestsPage() {
                   {request.company_name || "NorthStock Buyer"}
                 </p>
 
-                {(request.city || request.province) && (
+                {(request.city || request.province || request.country_code) && (
                   <p className="mt-2 text-slate-600">
-                    {[request.city, request.province]
-                      .filter(Boolean)
-                      .join(", ")}
+                    {formatLocation(request.city, request.province, request.country_code)}
                   </p>
                 )}
 
@@ -332,7 +334,9 @@ export default function BuyerRequestsPage() {
                     </p>
 
                     <p className="mt-1 font-extrabold">
-                      {request.budget || "Open to proposals"}
+                      {request.budget
+                        ? `${request.budget} ${request.currency_code || "USD"}`
+                        : "Open to proposals"}
                     </p>
                   </div>
                 </div>

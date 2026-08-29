@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { bearerToken, getUserFromToken } from "@/lib/server/auth";
 import { cleanText, escapeHtml } from "@/lib/server/security";
+import { formatLocation } from "@/lib/international";
 
 type Listing = {
   id: string;
@@ -9,6 +10,7 @@ type Listing = {
   category: string;
   city: string;
   province: string | null;
+  country_code: string | null;
   brand: string | null;
   model: string | null;
   sku: string | null;
@@ -16,6 +18,7 @@ type Listing = {
 };
 
 function matches(listing: Listing, search: Record<string, any>) {
+  if (search.country_code && listing.country_code !== search.country_code) return false;
   if (search.province && listing.province !== search.province) return false;
   if (search.city && !listing.city.toLowerCase().includes(String(search.city).toLowerCase())) return false;
   if (search.category && !String(search.category).split(",").map((v) => v.trim()).includes(listing.category)) return false;
@@ -39,7 +42,7 @@ export async function POST(request: Request) {
 
     const { data } = await admin
       .from("listings")
-      .select("id, user_id, title, category, city, province, brand, model, sku, description, status, expires_at")
+      .select("id, user_id, title, category, city, province, country_code, brand, model, sku, description, status, expires_at")
       .eq("id", listingId)
       .single();
 
@@ -54,7 +57,7 @@ export async function POST(request: Request) {
     const listing = data as Listing & { user_id: string };
     const { data: searches, error } = await admin
       .from("saved_searches")
-      .select("id, user_id, name, category, city, province, keyword")
+      .select("id, user_id, name, category, city, province, country_code, keyword")
       .eq("email_alerts_enabled", true);
 
     if (error) throw error;
@@ -84,7 +87,7 @@ export async function POST(request: Request) {
         html: `<div style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.6"><h2>New saved-search match</h2><p><strong>${escapeHtml(
           listing.title
         )}</strong> matches ${escapeHtml(search.name || "your saved search")}.</p><p>${escapeHtml(
-          [listing.city, listing.province].filter(Boolean).join(", ")
+          formatLocation(listing.city, listing.province, listing.country_code)
         )}</p><p><a href="${siteUrl}/listings/${listing.id}">View listing</a></p><p style="font-size:12px;color:#64748b">Manage alerts in <a href="${siteUrl}/saved-searches">Saved Searches</a>.</p></div>`,
       });
 

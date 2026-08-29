@@ -3,24 +3,14 @@
 import { CATEGORIES } from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import {
+  COUNTRY_OPTIONS,
+  CURRENCY_OPTIONS,
+  normalizeCountryCode,
+  normalizeCurrencyCode,
+} from "@/lib/international";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
-
-
-const regions = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
-  "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
-  "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
-  "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
-  "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
-  "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
-  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia",
-  "Washington", "West Virginia", "Wisconsin", "Wyoming",
-  "British Columbia", "Alberta", "Saskatchewan", "Manitoba", "Ontario",
-  "Quebec", "New Brunswick", "Nova Scotia", "Prince Edward Island",
-  "Newfoundland and Labrador", "Yukon", "Northwest Territories", "Nunavut",
-];
 
 export default function ListInventoryPage() {
   const [authChecking, setAuthChecking] = useState(true);
@@ -40,6 +30,8 @@ export default function ListInventoryPage() {
   const [quantity, setQuantity] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [currencyCode, setCurrencyCode] = useState("USD");
   const [price, setPrice] = useState("");
   const [priceNote, setPriceNote] = useState("");
   const [condition, setCondition] = useState("");
@@ -82,7 +74,15 @@ export default function ListInventoryPage() {
     return new Date(`${dateValue}T23:59:59`).toISOString();
   };
 
-  const getCoordinates = async (cityValue: string, provinceValue: string) => {
+  const getCoordinates = async (
+    cityValue: string,
+    provinceValue: string,
+    countryValue: string
+  ) => {
+    if (!['CA', 'US'].includes(countryValue)) {
+      return { latitude: null, longitude: null };
+    }
+
     const { data } = await supabase
       .from("city_coordinates")
       .select("latitude, longitude")
@@ -148,6 +148,32 @@ export default function ListInventoryPage() {
     return invalidRows;
   };
 
+  const validateExcelLocations = (rows: any[]) => {
+    return rows
+      .map((row, index) => {
+        const country = normalizeCountryCode(
+          row.country_code || row.Country_Code || row.country || row.Country
+        );
+        const rawCurrency = String(
+          row.currency_code || row.Currency_Code || row.currency || row.Currency || ""
+        ).trim();
+        const currency = CURRENCY_OPTIONS.some(
+          (option) => option.code === rawCurrency.toUpperCase()
+        )
+          ? rawCurrency.toUpperCase()
+          : "";
+
+        return {
+          rowNumber: index + 2,
+          country,
+          currency,
+          rawCountry: row.country_code || row.Country_Code || row.country || row.Country,
+          rawCurrency,
+        };
+      })
+      .filter((row) => !row.country || !row.currency);
+  };
+
   const formatExcelRows = async (rows: any[], userId: string) => {
     const formattedRows = await Promise.all(
       rows.map(async (row: any) => {
@@ -156,9 +182,23 @@ export default function ListInventoryPage() {
 
         const rowCity = row.city || row.City || "";
         const rowProvince =
-          row.province || row.Province || row.state || row.State || "";
+          row.region_state_province ||
+          row.Region_State_Province ||
+          row.province ||
+          row.Province ||
+          row.state ||
+          row.State ||
+          row.region ||
+          row.Region ||
+          "";
+        const rowCountry = normalizeCountryCode(
+          row.country_code || row.Country_Code || row.country || row.Country
+        );
+        const rowCurrency = normalizeCurrencyCode(
+          row.currency_code || row.Currency_Code || row.currency || row.Currency
+        );
 
-        const coordinates = await getCoordinates(rowCity, rowProvince);
+        const coordinates = await getCoordinates(rowCity, rowProvince, rowCountry);
 
         const rawPriceNote =
           row.price_note ||
@@ -175,6 +215,8 @@ export default function ListInventoryPage() {
           quantity: Number(row.quantity || row.Quantity || 0),
           city: rowCity,
           province: rowProvince,
+          country_code: rowCountry,
+          currency_code: rowCurrency,
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
           price: row.price || row.Price ? Number(row.price || row.Price) : null,
@@ -227,7 +269,9 @@ export default function ListInventoryPage() {
     { header: "description", key: "description", width: 48 },
     { header: "quantity", key: "quantity", width: 12 },
     { header: "city", key: "city", width: 20 },
-    { header: "province", key: "province", width: 24 },
+    { header: "region_state_province", key: "province", width: 24 },
+    { header: "country_code", key: "country_code", width: 16 },
+    { header: "currency_code", key: "currency_code", width: 16 },
     { header: "price", key: "price", width: 14 },
     { header: "price_note", key: "price_note", width: 34 },
     { header: "condition", key: "condition", width: 14 },
@@ -246,6 +290,8 @@ export default function ListInventoryPage() {
       quantity: 10,
       city: "Vancouver",
       province: "British Columbia",
+      country_code: "CA",
+      currency_code: "CAD",
       price: 100,
       price_note: "$100 each or bulk pricing available",
       condition: "Used",
@@ -262,6 +308,8 @@ export default function ListInventoryPage() {
       quantity: 2,
       city: "Toronto",
       province: "Ontario",
+      country_code: "CA",
+      currency_code: "CAD",
       price: 3500,
       price_note: "",
       condition: "Used",
@@ -278,6 +326,8 @@ export default function ListInventoryPage() {
       quantity: 40,
       city: "Calgary",
       province: "Alberta",
+      country_code: "CA",
+      currency_code: "CAD",
       price: 125,
       price_note: "Volume pricing available",
       condition: "New",
@@ -294,6 +344,8 @@ export default function ListInventoryPage() {
       quantity: 4,
       city: "Seattle",
       province: "Washington",
+      country_code: "US",
+      currency_code: "USD",
       price: 2200,
       price_note: "",
       condition: "Used",
@@ -306,7 +358,7 @@ export default function ListInventoryPage() {
   ];
 
   inventorySheet.addRows(examples);
-  inventorySheet.autoFilter = "A1:N1";
+  inventorySheet.autoFilter = "A1:P1";
   inventorySheet.getRow(1).height = 30;
 
   inventorySheet.getRow(1).eachCell((cell) => {
@@ -365,7 +417,7 @@ export default function ListInventoryPage() {
     }
   });
 
-  inventorySheet.getColumn("price").numFmt = "$#,##0.00";
+  inventorySheet.getColumn("price").numFmt = "#,##0.00";
   inventorySheet.getColumn("quantity").numFmt = "0";
 
   for (let rowNumber = 2; rowNumber <= 1000; rowNumber += 1) {
@@ -379,7 +431,7 @@ export default function ListInventoryPage() {
         "Select a category from the dropdown. Category names must match exactly.",
     };
 
-    inventorySheet.getCell(`I${rowNumber}`).dataValidation = {
+    inventorySheet.getCell(`K${rowNumber}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ['"New,Used,Refurbished"'],
@@ -439,7 +491,13 @@ export default function ListInventoryPage() {
 instructionsSheet.addRows([
   {
     topic: "Required fields",
-    details: "title, category, quantity, city, and province",
+    details:
+      "title, category, quantity, city, region_state_province, country_code, and currency_code",
+  },
+  {
+    topic: "Country and currency",
+    details:
+      "Use two-letter ISO country codes such as CA, US, GB, AU, or DE, and three-letter currency codes such as CAD, USD, GBP, AUD, or EUR.",
   },
   {
     topic: "Category",
@@ -586,8 +644,8 @@ instructionsSheet.addRows([
   const handleManualListingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title || !category || !quantity || !city || !province) {
-      alert("Please complete title, category, quantity, city, and province/state.");
+    if (!title || !category || !quantity || !city || !province || !countryCode || !currencyCode) {
+      alert("Please complete title, category, quantity, city, region, country, and currency.");
       return;
     }
 
@@ -603,7 +661,7 @@ instructionsSheet.addRows([
       return;
     }
 
-    const coordinates = await getCoordinates(city, province);
+    const coordinates = await getCoordinates(city, province, countryCode);
 
     const { data: insertedListing, error } = await supabase
       .from("listings")
@@ -616,6 +674,8 @@ instructionsSheet.addRows([
           quantity: Number(quantity),
           city,
           province,
+          country_code: countryCode,
+          currency_code: currencyCode,
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
           price: price ? Number(price) : null,
@@ -657,7 +717,10 @@ instructionsSheet.addRows([
       });
     }
 
-    if (!coordinates.latitude || !coordinates.longitude) {
+    if (
+      ['CA', 'US'].includes(countryCode) &&
+      (!coordinates.latitude || !coordinates.longitude)
+    ) {
       alert(
         "Inventory listing added successfully, but no coordinates were found for this city. Radius search may not include this listing until the city is added to the coordinate table."
       );
@@ -671,6 +734,8 @@ instructionsSheet.addRows([
     setQuantity("");
     setCity("");
     setProvince("");
+    setCountryCode("");
+    setCurrencyCode("USD");
     setPrice("");
     setPriceNote("");
     setCondition("");
@@ -701,6 +766,7 @@ instructionsSheet.addRows([
     }
 
     const invalidRows = validateExcelCategories(excelRows);
+    const invalidLocations = validateExcelLocations(excelRows);
     
     const allowedCategories = CATEGORIES.map((c) => `- ${c}`).join("\n");
 
@@ -716,6 +782,15 @@ ${invalidRows
   .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
   .join("\n")}`
 );
+      return;
+    }
+
+    if (invalidLocations.length > 0) {
+      alert(
+        `Every row needs a valid two-letter country_code and supported three-letter currency_code. Check rows: ${invalidLocations
+          .map((row) => row.rowNumber)
+          .join(", ")}`
+      );
       return;
     }
 
@@ -753,6 +828,7 @@ ${invalidRows
     }
 
     const invalidRows = validateExcelCategories(excelRows);
+    const invalidLocations = validateExcelLocations(excelRows);
     const allowedCategories = CATEGORIES.map((c) => `- ${c}`).join("\n");
 
     if (invalidRows.length > 0) {
@@ -767,6 +843,16 @@ ${invalidRows
   .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
   .join("\n")}`
 );
+      return;
+    }
+
+
+    if (invalidLocations.length > 0) {
+      alert(
+        `Every row needs a valid two-letter country_code and supported three-letter currency_code. Check rows: ${invalidLocations
+          .map((row) => row.rowNumber)
+          .join(", ")}`
+      );
       return;
     }
 
@@ -856,14 +942,21 @@ ${invalidRows
 
             <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Numeric Price, e.g. 100" type="number" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
 
-            <input value={priceNote} onChange={(e) => setPriceNote(e.target.value)} placeholder="Price Text, e.g. $100 each, negotiable, contact for pricing" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500 md:col-span-2" />
+            <select value={currencyCode} onChange={(e) => setCurrencyCode(e.target.value)} className="rounded-xl border border-slate-300 p-4 text-slate-950">
+              <option value="">Select Currency *</option>
+              {CURRENCY_OPTIONS.map((item) => <option key={item.code} value={item.code}>{item.code} — {item.name}</option>)}
+            </select>
+
+            <input value={priceNote} onChange={(e) => setPriceNote(e.target.value)} placeholder="Price note, e.g. per item, negotiable, contact for pricing" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
+
+            <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="rounded-xl border border-slate-300 p-4 text-slate-950">
+              <option value="">Select Country *</option>
+              {COUNTRY_OPTIONS.map((item) => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}
+            </select>
 
             <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City *" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
 
-            <select value={province} onChange={(e) => setProvince(e.target.value)} className="rounded-xl border border-slate-300 p-4 text-slate-950">
-              <option value="">Province / State *</option>
-              {regions.map((item) => <option key={item}>{item}</option>)}
-            </select>
+            <input value={province} onChange={(e) => setProvince(e.target.value)} placeholder="Region / State / Province *" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
 
             <input value={condition} onChange={(e) => setCondition(e.target.value)} placeholder="Condition" className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500" />
 
@@ -954,7 +1047,7 @@ Office Furniture, Restaurant Equipment, Hotel Supplies, or Commercial Gym Equipm
           </p>
 
           <p className="mt-3 text-sm font-semibold text-slate-700">
-            Required columns: title, category, description, quantity, city, province, price, price_note, condition, brand, model, sku, image_url, expires_at.
+            Required columns: title, category, quantity, city, region_state_province, country_code, and currency_code. Optional columns: description, price, price_note, condition, brand, model, sku, image_url, and expires_at.
             The expires_at column is optional. Leave it blank to use the default 30-day expiry.
           </p>
 

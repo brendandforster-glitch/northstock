@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatLocation } from "@/lib/international";
 
 type BuyerRequest = {
   id: string;
@@ -14,6 +15,8 @@ type BuyerRequest = {
   budget: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
+  currency_code: string | null;
   status: string;
   fulfilled: boolean;
   expires_at: string;
@@ -37,7 +40,7 @@ export default function BuyerRequestDetailsPage() {
       const { data, error } = await supabase
         .from("buyer_requests")
         .select(
-          "id, company_name, title, category, description, quantity, budget, city, province, status, fulfilled, expires_at, created_at"
+          "id, company_name, title, category, description, quantity, budget, city, province, country_code, currency_code, status, fulfilled, expires_at, created_at"
         )
         .eq("id", requestId)
         .single();
@@ -99,9 +102,7 @@ export default function BuyerRequestDetailsPage() {
     );
   }
 
-  const location = [request.city, request.province]
-    .filter(Boolean)
-    .join(", ");
+  const location = formatLocation(request.city, request.province, request.country_code);
 
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
@@ -180,7 +181,9 @@ export default function BuyerRequestDetailsPage() {
                 </p>
 
                 <p className="mt-2 text-xl font-extrabold">
-                  {request.budget || "Open to proposals"}
+                  {request.budget
+                    ? `${request.budget} ${request.currency_code || "USD"}`
+                    : "Open to proposals"}
                 </p>
               </div>
 

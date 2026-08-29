@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency, formatLocation } from "@/lib/international";
 
 type SavedListing = {
   id: string;
@@ -13,22 +14,14 @@ type SavedListing = {
     category: string;
     city: string;
     province: string | null;
+    country_code: string | null;
+    currency_code: string | null;
     price: number | null;
     image_url: string | null;
     status: string | null;
     expires_at: string | null;
   } | null;
 };
-
-function formatPrice(price: number | null) {
-  if (price === null || price === undefined) return "Contact for pricing";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price);
-}
 
 export default function SavedListingsPage() {
   const [savedListings, setSavedListings] = useState<SavedListing[]>([]);
@@ -63,6 +56,8 @@ export default function SavedListingsPage() {
           category,
           city,
           province,
+          country_code,
+          currency_code,
           price,
           image_url,
           status,
@@ -169,12 +164,11 @@ export default function SavedListingsPage() {
                     <h2 className="mt-1 text-2xl font-bold">{item.title}</h2>
 
                     <p className="mt-2 text-lg font-bold text-slate-950">
-                      {formatPrice(item.price)}
+                      {formatCurrency(item.price, item.currency_code)}
                     </p>
 
                     <p className="mt-2 text-slate-700">
-                      {item.city}
-                      {item.province ? `, ${item.province}` : ""}
+                      {formatLocation(item.city, item.province, item.country_code)}
                     </p>
                   </div>
 

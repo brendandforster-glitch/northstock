@@ -24,6 +24,7 @@ export async function POST(request: Request) {
     website,
     city,
     province,
+    countryCode,
   } = body;
 
   if (!accessToken) {
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
           website: website || "",
           city: city || "",
           province: province || "",
+          country_code: countryCode || null,
           description: "",
           logo_url: "",
           user_id: null,
@@ -122,7 +124,7 @@ export async function POST(request: Request) {
         </p>
 
         <p>
-          NorthStock is a commercial inventory marketplace built for businesses across North America.
+          NorthStock is a commercial inventory marketplace built for businesses worldwide.
           Through your seller account, you can manage your company profile, inventory listings, and quote requests.
         </p>
 

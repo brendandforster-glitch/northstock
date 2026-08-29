@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { use } from "react";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency, formatLocation } from "@/lib/international";
 
 type Company = {
   id: string;
@@ -14,6 +15,7 @@ type Company = {
   email: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
   logo_url: string | null;
   banner_url: string | null;
   created_at: string | null;
@@ -25,6 +27,8 @@ type Listing = {
   category: string;
   city: string;
   province: string | null;
+  country_code: string | null;
+  currency_code: string | null;
   price: number | null;
   price_note: string | null;
   condition: string | null;
@@ -33,15 +37,9 @@ type Listing = {
   created_at: string | null;
 };
 
-function formatPrice(price: number | null, priceNote?: string | null) {
+function formatPrice(price: number | null, priceNote?: string | null, currencyCode?: string | null) {
   if (priceNote) return priceNote;
-  if (price === null || price === undefined) return "Contact for pricing";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price);
+  return formatCurrency(price, currencyCode);
 }
 
 function formatDate(dateString: string | null) {
@@ -85,7 +83,7 @@ export default function CompanyProfilePage({
     const { data: listingData } = await supabase
       .from("listings")
       .select(
-        "id, title, category, city, province, price, price_note, condition, quantity, image_url, created_at"
+        "id, title, category, city, province, country_code, currency_code, price, price_note, condition, quantity, image_url, created_at"
       )
       .eq("user_id", companyData.user_id)
       .eq("status", "active")
@@ -112,7 +110,7 @@ export default function CompanyProfilePage({
     );
   }
 
-  const location = [company.city, company.province].filter(Boolean).join(", ");
+  const location = formatLocation(company.city, company.province, company.country_code);
   const newestListings = listings.slice(0, 3);
 
   return (
@@ -293,7 +291,7 @@ export default function CompanyProfilePage({
     </h3>
 
     <p className="mt-2 font-bold text-slate-950">
-      {formatPrice(item.price, item.price_note)}
+      {formatPrice(item.price, item.price_note, item.currency_code)}
     </p>
 
     <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
@@ -353,8 +351,7 @@ export default function CompanyProfilePage({
     </h3>
 
     <p className="mt-2 text-slate-600">
-      {item.city}
-      {item.province ? `, ${item.province}` : ""}
+      {formatLocation(item.city, item.province, item.country_code)}
     </p>
 
     <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
@@ -373,7 +370,7 @@ export default function CompanyProfilePage({
   </div>
 
   <div className="text-lg font-bold text-slate-950">
-    {formatPrice(item.price, item.price_note)}
+    {formatPrice(item.price, item.price_note, item.currency_code)}
   </div>
 </a>
                   ))

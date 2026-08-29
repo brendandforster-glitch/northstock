@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { CATEGORIES } from "@/lib/categories";
+import { CURRENCY_OPTIONS, normalizeCountryCode, normalizeCurrencyCode } from "@/lib/international";
 
 
 type Company = {
@@ -74,7 +75,11 @@ export default function AdminUploadPage() {
     return new Date(`${dateValue}T23:59:59`).toISOString();
   }
 
-  async function getCoordinates(cityValue: string, provinceValue: string) {
+  async function getCoordinates(cityValue: string, provinceValue: string, countryValue: string) {
+    if (!["CA", "US"].includes(countryValue)) {
+      return { latitude: null, longitude: null };
+    }
+
     const { data } = await supabase
       .from("city_coordinates")
       .select("latitude, longitude")
@@ -101,6 +106,20 @@ export default function AdminUploadPage() {
       .filter((row) => !CATEGORIES.includes(row.category));
   }
 
+  function validateInternationalFields(rows: any[]) {
+    return rows
+      .map((row, index) => ({
+        rowNumber: index + 2,
+        country: normalizeCountryCode(row.country_code || row.Country_Code || row.country || row.Country),
+        rawCurrency: String(row.currency_code || row.Currency_Code || row.currency || row.Currency || "").trim().toUpperCase(),
+      }))
+      .filter(
+        (row) =>
+          !row.country ||
+          !CURRENCY_OPTIONS.some((option) => option.code === row.rawCurrency)
+      );
+  }
+
   async function formatExcelRows(rows: any[], sellerUserId: string) {
     return await Promise.all(
       rows.map(async (row: any) => {
@@ -109,7 +128,15 @@ export default function AdminUploadPage() {
 
         const rowCity = row.city || row.City || "";
         const rowProvince =
-          row.province || row.Province || row.state || row.State || "";
+          row.region_state_province || row.Region_State_Province ||
+          row.province || row.Province || row.state || row.State ||
+          row.region || row.Region || "";
+        const rowCountry = normalizeCountryCode(
+          row.country_code || row.Country_Code || row.country || row.Country
+        );
+        const rowCurrency = normalizeCurrencyCode(
+          row.currency_code || row.Currency_Code || row.currency || row.Currency
+        );
 
         const rawPriceNote =
           row.price_note ||
@@ -118,7 +145,7 @@ export default function AdminUploadPage() {
           row.PriceNote ||
           "";
 
-        const coordinates = await getCoordinates(rowCity, rowProvince);
+        const coordinates = await getCoordinates(rowCity, rowProvince, rowCountry);
 
         return {
           user_id: sellerUserId,
@@ -128,6 +155,8 @@ export default function AdminUploadPage() {
           quantity: Number(row.quantity || row.Quantity || 0),
           city: rowCity,
           province: rowProvince,
+          country_code: rowCountry,
+          currency_code: rowCurrency,
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
           price: row.price || row.Price ? Number(row.price || row.Price) : null,
@@ -165,7 +194,7 @@ export default function AdminUploadPage() {
 
     worksheet.columns = [
       ["title", 32], ["category", 30], ["description", 44], ["quantity", 12],
-      ["city", 20], ["province", 22], ["price", 14], ["price_note", 30],
+      ["city", 20], ["region_state_province", 26], ["country_code", 16], ["currency_code", 16], ["price", 14], ["price_note", 30],
       ["condition", 14], ["brand", 20], ["model", 18], ["sku", 18],
       ["image_url", 40], ["expires_at", 18],
     ].map(([header, width]) => ({ header: String(header), key: String(header), width: Number(width) }));
@@ -177,6 +206,8 @@ export default function AdminUploadPage() {
       quantity: index + 2,
       city: index % 2 ? "Toronto" : "Vancouver",
       province: index % 2 ? "Ontario" : "British Columbia",
+      country_code: "CA",
+      currency_code: "CAD",
       price: 1000 + index * 250,
       price_note: index === 0 ? "Volume pricing available" : "",
       condition: index % 2 ? "New" : "Used",
@@ -187,7 +218,7 @@ export default function AdminUploadPage() {
       expires_at: "",
     }));
     worksheet.addRows(examples);
-    worksheet.autoFilter = "A1:N1";
+    worksheet.autoFilter = "A1:P1";
 
     worksheet.getRow(1).height = 30;
     worksheet.getRow(1).eachCell((cell) => {
@@ -218,7 +249,7 @@ export default function AdminUploadPage() {
         allowBlank: false,
         formulae: [`'Allowed Categories'!$A$2:$A$${CATEGORIES.length + 1}`],
       };
-      worksheet.getCell(`I${row}`).dataValidation = {
+      worksheet.getCell(`K${row}`).dataValidation = {
         type: "list",
         allowBlank: true,
         formulae: ['"New,Used"'],
@@ -262,6 +293,7 @@ export default function AdminUploadPage() {
     }
 
     const invalidRows = validateExcelCategories(excelRows);
+    const invalidInternationalRows = validateInternationalFields(excelRows);
     const allowedCategories = CATEGORIES.map((c) => `- ${c}`).join("\n");
 
     if (invalidRows.length > 0) {
@@ -276,6 +308,11 @@ ${invalidRows
   .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
   .join("\n")}`
 );
+      return;
+    }
+
+    if (invalidInternationalRows.length > 0) {
+      alert(`Every row needs country_code and currency_code. Check rows: ${invalidInternationalRows.map((row) => row.rowNumber).join(", ")}`);
       return;
     }
 
@@ -316,6 +353,7 @@ ${invalidRows
     }
 
     const invalidRows = validateExcelCategories(excelRows);
+    const invalidInternationalRows = validateInternationalFields(excelRows);
     const allowedCategories = CATEGORIES.map((c) => `- ${c}`).join("\n");
 
     if (invalidRows.length > 0) {
@@ -330,6 +368,11 @@ ${invalidRows
   .map((row) => `Row ${row.rowNumber}: ${row.category || "Blank"}`)
   .join("\n")}`
 );
+      return;
+    }
+
+    if (invalidInternationalRows.length > 0) {
+      alert(`Every row needs country_code and currency_code. Check rows: ${invalidInternationalRows.map((row) => row.rowNumber).join(", ")}`);
       return;
     }
 

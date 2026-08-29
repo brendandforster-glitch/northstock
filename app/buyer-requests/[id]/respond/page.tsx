@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatLocation } from "@/lib/international";
 
 type BuyerRequest = {
   id: string;
@@ -12,6 +13,7 @@ type BuyerRequest = {
   category: string;
   city: string | null;
   province: string | null;
+  country_code: string | null;
   expires_at: string;
 };
 
@@ -51,7 +53,7 @@ export default function RespondToBuyerRequestPage() {
       const { data: requestData, error: requestError } = await supabase
         .from("buyer_requests")
         .select(
-          "id, user_id, company_name, title, category, city, province, expires_at"
+          "id, user_id, company_name, title, category, city, province, country_code, expires_at"
         )
         .eq("id", requestId)
         .single();
@@ -171,9 +173,7 @@ export default function RespondToBuyerRequestPage() {
     );
   }
 
-  const location = [request.city, request.province]
-    .filter(Boolean)
-    .join(", ");
+  const location = formatLocation(request.city, request.province, request.country_code);
 
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">

@@ -1,6 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
+import { formatLocation } from "@/lib/international";
 import { useEffect, useState } from "react";
 
 type BuyerRequest = {
@@ -11,6 +12,8 @@ type BuyerRequest = {
   budget: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
+  currency_code: string | null;
   status: string;
   fulfilled: boolean;
   is_public: boolean;
@@ -126,7 +129,7 @@ export default function MyBuyerRequestsPage() {
     } = await supabase
       .from("buyer_requests")
       .select(
-        "id, title, category, quantity, budget, city, province, status, fulfilled, is_public, expires_at, created_at"
+        "id, title, category, quantity, budget, city, province, country_code, currency_code, status, fulfilled, is_public, expires_at, created_at"
       )
       .eq("user_id", user.id)
       .order("created_at", {
@@ -543,12 +546,7 @@ export default function MyBuyerRequestsPage() {
                         </h2>
 
                         <p className="mt-3 text-slate-600">
-                          {[
-                            request.city,
-                            request.province,
-                          ]
-                            .filter(Boolean)
-                            .join(", ")}
+                          {formatLocation(request.city, request.province, request.country_code)}
                         </p>
 
                         <div className="mt-4 flex flex-wrap gap-5 text-sm text-slate-600">
@@ -564,8 +562,9 @@ export default function MyBuyerRequestsPage() {
                             <strong>
                               Budget:
                             </strong>{" "}
-                            {request.budget ||
-                              "Open to proposals"}
+                            {request.budget
+                              ? `${request.budget} ${request.currency_code || "USD"}`
+                              : "Open to proposals"}
                           </span>
 
                           <span>

@@ -89,13 +89,13 @@ export async function POST(request: Request) {
 
     supabaseAdmin
       .from("companies")
-      .select("id, company_name, city, province, created_at")
+      .select("id, company_name, city, province, country_code, created_at")
       .order("created_at", { ascending: false })
       .limit(5),
 
     supabaseAdmin
       .from("listings")
-      .select("id, title, category, city, province, created_at")
+      .select("id, title, category, city, province, country_code, created_at")
       .order("created_at", { ascending: false })
       .limit(5),
 

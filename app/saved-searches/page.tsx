@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { getCountryName } from "@/lib/international";
 
 type SavedSearch = {
   id: string;
@@ -9,6 +10,7 @@ type SavedSearch = {
   category: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
   radius_km: number | null;
   keyword: string | null;
   email_alerts_enabled: boolean | null;
@@ -146,7 +148,14 @@ export default function SavedSearchesPage() {
 
                       <p>
                         <span className="font-semibold text-slate-950">
-                          Province/State:
+                          Country:
+                        </span>{" "}
+                        {getCountryName(search.country_code) || "Any"}
+                      </p>
+
+                      <p>
+                        <span className="font-semibold text-slate-950">
+                          Region/State/Province:
                         </span>{" "}
                         {search.province || "Any"}
                       </p>

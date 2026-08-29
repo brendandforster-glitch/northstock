@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency, formatLocation } from "@/lib/international";
 
 type Listing = {
   id: string;
@@ -11,6 +12,8 @@ type Listing = {
   quantity: number;
   city: string;
   province: string | null;
+  country_code: string | null;
+  currency_code: string | null;
   price: number | null;
   price_note: string | null;
   status: string | null;
@@ -22,15 +25,9 @@ type Listing = {
   company_name?: string;
 };
 
-function formatPrice(price: number | null, priceNote?: string | null) {
+function formatPrice(price: number | null, priceNote?: string | null, currencyCode?: string | null) {
   if (priceNote) return priceNote;
-  if (price === null || price === undefined) return "Contact for pricing";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price);
+  return formatCurrency(price, currencyCode);
 }
 
 function formatDate(dateString: string | null) {
@@ -162,6 +159,7 @@ export default function AdminListingsPage() {
       item.category,
       item.city,
       item.province,
+      item.country_code,
       item.brand,
       item.model,
       item.sku,
@@ -247,12 +245,11 @@ export default function AdminListingsPage() {
                     <h2 className="mt-1 text-2xl font-bold">{item.title}</h2>
 
                     <p className="mt-2 font-semibold text-slate-950">
-                      {formatPrice(item.price, item.price_note)}
+                      {formatPrice(item.price, item.price_note, item.currency_code)}
                     </p>
 
                     <p className="mt-2 text-slate-700">
-                      {item.city}
-                      {item.province ? `, ${item.province}` : ""}
+                      {formatLocation(item.city, item.province, item.country_code)}
                     </p>
 
                     <div className="mt-4 grid gap-2 text-sm text-slate-700 md:grid-cols-2">

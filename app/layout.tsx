@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "NorthStock is North America's free commercial inventory marketplace for office furniture, restaurant equipment, hotel supplies, commercial gym equipment, and more.",
+    "NorthStock is a free global marketplace for used, surplus, and overstock commercial inventory, including office furniture, restaurant equipment, hotel supplies, commercial gym equipment, and more.",
 
   keywords: [
     "commercial inventory",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 
   openGraph: {
     title: "NorthStock",
-    description: "North America's Commercial Inventory Marketplace",
+    description: "The Global Commercial Inventory Marketplace",
     url: "https://northstock.ca",
     siteName: "NorthStock",
     type: "website",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "NorthStock",
-    description: "North America's Commercial Inventory Marketplace",
+    description: "The Global Commercial Inventory Marketplace",
     images: ["/northstock-logo.png"],
   },
 };

@@ -556,7 +556,7 @@ export async function PATCH(request: NextRequest) {
                 </div>
 
                 <div style="border-top:1px solid #e2e8f0;padding:20px 28px;color:#64748b;font-size:13px;">
-                  NorthStock — North America’s Commercial Inventory Marketplace
+                  NorthStock — The Global Commercial Inventory Marketplace
                 </div>
               </div>
             </div>

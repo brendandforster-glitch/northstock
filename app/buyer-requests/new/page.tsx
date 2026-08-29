@@ -1,8 +1,8 @@
 "use client";
 
 import { CATEGORIES } from "@/lib/categories";
-import { REGION_GROUPS } from "@/lib/regions";
 import { supabase } from "@/lib/supabase";
+import { COUNTRY_OPTIONS, CURRENCY_OPTIONS } from "@/lib/international";
 import { useEffect, useState } from "react";
 
 export default function NewBuyerRequestPage() {
@@ -17,6 +17,8 @@ export default function NewBuyerRequestPage() {
   const [budget, setBudget] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [currencyCode, setCurrencyCode] = useState("USD");
   const [isPublic, setIsPublic] = useState(true);
 
   const [submitting, setSubmitting] = useState(false);
@@ -37,13 +39,17 @@ export default function NewBuyerRequestPage() {
 
       const { data: companies } = await supabase
         .from("companies")
-        .select("company_name")
+        .select("company_name, country_code")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1);
 
       if (companies?.[0]?.company_name) {
         setCompanyName(companies[0].company_name);
+      }
+
+      if (companies?.[0]?.country_code) {
+        setCountryCode(companies[0].country_code);
       }
 
       setAuthChecking(false);
@@ -65,9 +71,9 @@ export default function NewBuyerRequestPage() {
       return;
     }
 
-    if (!title || !category || !description || !city || !province) {
+    if (!title || !category || !description || !city || !province || !countryCode || !currencyCode) {
       alert(
-        "Please complete the title, category, description, city, and province/state."
+        "Please complete the title, category, description, city, region, country, and currency."
       );
       return;
     }
@@ -90,7 +96,9 @@ export default function NewBuyerRequestPage() {
         quantity: quantity ? Number(quantity) : null,
         budget: budget.trim() || null,
         city: city.trim(),
-        province,
+        province: province.trim(),
+        country_code: countryCode,
+        currency_code: currencyCode,
         is_public: isPublic,
       },
     ]);
@@ -110,6 +118,8 @@ export default function NewBuyerRequestPage() {
     setBudget("");
     setCity("");
     setProvince("");
+    setCountryCode("");
+    setCurrencyCode("USD");
     setIsPublic(true);
 
     window.scrollTo({
@@ -162,11 +172,17 @@ export default function NewBuyerRequestPage() {
               Sell Inventory
             </a>
 
-            <a href="/help" className="transition hover:text-blue-600">
+            <a
+              href="/help"
+              className="transition hover:text-blue-600"
+            >
               Help
             </a>
 
-            <a href="/#contact" className="transition hover:text-blue-600">
+            <a
+              href="/#contact"
+              className="transition hover:text-blue-600"
+            >
               Contact
             </a>
           </nav>
@@ -187,7 +203,6 @@ export default function NewBuyerRequestPage() {
             </a>
 
             <button
-              type="button"
               onClick={handleLogout}
               className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
             >
@@ -316,7 +331,41 @@ export default function NewBuyerRequestPage() {
               />
             </label>
 
-            <div />
+            <label>
+              <span className="font-bold">Budget currency *</span>
+
+              <select
+                value={currencyCode}
+                onChange={(e) => setCurrencyCode(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-4"
+                required
+              >
+                <option value="">Select a currency</option>
+                {CURRENCY_OPTIONS.map((item) => (
+                  <option key={item.code} value={item.code}>
+                    {item.code} — {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span className="font-bold">Country *</span>
+
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-4"
+                required
+              >
+                <option value="">Select a country</option>
+                {COUNTRY_OPTIONS.map((item) => (
+                  <option key={item.code} value={item.code}>
+                    {item.name} ({item.code})
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <label>
               <span className="font-bold">City *</span>
@@ -331,26 +380,15 @@ export default function NewBuyerRequestPage() {
             </label>
 
             <label>
-              <span className="font-bold">Province or state *</span>
+              <span className="font-bold">Region / State / Province *</span>
 
-              <select
+              <input
                 value={province}
                 onChange={(e) => setProvince(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-4"
+                placeholder="Example: British Columbia, Bavaria, or Victoria"
+                className="mt-2 w-full rounded-xl border border-slate-300 p-4"
                 required
-              >
-                <option value="">Select a province or state</option>
-
-                {REGION_GROUPS.map((group) => (
-                  <optgroup key={group.label} label={group.label}>
-                    {group.regions.map((region) => (
-                      <option key={region} value={region}>
-                        {region}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+              />
             </label>
 
             <label className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-5 md:col-span-2">

@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { COUNTRY_OPTIONS } from "@/lib/international";
 
 type Company = {
   id: string;
@@ -13,6 +14,7 @@ type Company = {
   email: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
   logo_url: string | null;
 };
 
@@ -36,6 +38,7 @@ export default function AdminEditCompanyPage({
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
+  const [countryCode, setCountryCode] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
 
   useEffect(() => {
@@ -84,6 +87,7 @@ export default function AdminEditCompanyPage({
     setEmail(companyData.email || "");
     setCity(companyData.city || "");
     setProvince(companyData.province || "");
+    setCountryCode(companyData.country_code || "");
     setLogoUrl(companyData.logo_url || "");
 
     setLoading(false);
@@ -109,6 +113,7 @@ export default function AdminEditCompanyPage({
         email,
         city,
         province,
+        country_code: countryCode || null,
         logo_url: logoUrl,
       })
       .eq("id", id);
@@ -208,6 +213,19 @@ export default function AdminEditCompanyPage({
             />
 
             <div className="grid gap-5 md:grid-cols-2">
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="rounded-xl border border-slate-300 bg-white p-4 text-slate-950"
+              >
+                <option value="">Select Country</option>
+                {COUNTRY_OPTIONS.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name} ({country.code})
+                  </option>
+                ))}
+              </select>
+
               <input
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
@@ -218,7 +236,7 @@ export default function AdminEditCompanyPage({
               <input
                 value={province}
                 onChange={(e) => setProvince(e.target.value)}
-                placeholder="Province / State"
+                placeholder="Region / State / Province"
                 className="rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
               />
             </div>

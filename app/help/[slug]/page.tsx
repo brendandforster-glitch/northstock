@@ -40,7 +40,7 @@ const guides: Record<
       "Add individual commercial inventory listings so buyers can find your items and request quotes.",
     steps: [
       "Log in and select Sell Inventory from the main navigation.",
-      "Enter the item title, category, quantity, condition, price or pricing note, city, and province/state.",
+      "Enter the item title, category, quantity, condition, price or pricing note, currency, city, region/state/province, and country.",
       "Add the brand, model, SKU, description, and image URL when available.",
       "Review the information and submit the listing.",
       "Confirm the new item appears in your seller dashboard and on the public inventory page.",
@@ -97,7 +97,7 @@ const guides: Record<
       "Log in to your free NorthStock account.",
       "Open Buyer Requests from the main navigation.",
       "Select Post a Buyer Request or Post What You Need.",
-      "Enter a clear title, category, request details, quantity, budget, city, and province/state.",
+      "Enter a clear title, category, request details, quantity, budget currency, city, region/state/province, and country.",
       "Choose whether the request should be published publicly. Your personal email address is never displayed on the public request.",
       "Submit the request. It remains active for 30 days unless you pause, fulfil, or delete it.",
       "Posting a buyer request is free, with no buyer fees or commissions.",

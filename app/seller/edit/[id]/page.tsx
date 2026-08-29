@@ -1,9 +1,9 @@
 "use client";
 
-import { CATEGORIES } from "@/lib/categories";
-import { REGION_GROUPS } from "@/lib/regions";
-import { supabase } from "@/lib/supabase";
 import { use, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { CATEGORIES } from "@/lib/categories";
+import { COUNTRY_OPTIONS, CURRENCY_OPTIONS } from "@/lib/international";
 
 export default function EditListingPage({
   params,
@@ -27,6 +27,8 @@ export default function EditListingPage({
   const [sku, setSku] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [currencyCode, setCurrencyCode] = useState("USD");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
@@ -71,6 +73,8 @@ export default function EditListingPage({
       setSku(data.sku || "");
       setCity(data.city || "");
       setProvince(data.province || "");
+      setCountryCode(data.country_code || "");
+      setCurrencyCode(data.currency_code || "USD");
       setDescription(data.description || "");
       setImageUrl(data.image_url || "");
 
@@ -123,8 +127,13 @@ export default function EditListingPage({
 
   async function getCoordinates(
     cityValue: string,
-    provinceValue: string
+    provinceValue: string,
+    countryValue: string
   ) {
+    if (!["CA", "US"].includes(countryValue)) {
+      return { latitude: null, longitude: null };
+    }
+
     const { data } = await supabase
       .from("city_coordinates")
       .select("latitude, longitude")
@@ -141,16 +150,14 @@ export default function EditListingPage({
   async function saveChanges(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!title || !category || !quantity || !city || !province) {
-      alert(
-        "Please complete title, category, quantity, city, and province/state."
-      );
+    if (!title || !category || !quantity || !city || !province || !countryCode || !currencyCode) {
+      alert("Please complete title, category, quantity, city, region, country, and currency.");
       return;
     }
 
     setSaving(true);
 
-    const coordinates = await getCoordinates(city, province);
+    const coordinates = await getCoordinates(city, province, countryCode);
 
     const { error } = await supabase
       .from("listings")
@@ -166,13 +173,13 @@ export default function EditListingPage({
         sku,
         city,
         province,
+        country_code: countryCode,
+        currency_code: currencyCode,
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
         description,
         image_url: imageUrl || null,
-        expires_at: expiresAt
-          ? new Date(`${expiresAt}T23:59:59`).toISOString()
-          : null,
+        expires_at: expiresAt ? new Date(`${expiresAt}T23:59:59`).toISOString() : null,
       })
       .eq("id", id);
 
@@ -187,12 +194,6 @@ export default function EditListingPage({
     window.location.href = "/seller";
   }
 
-  const hasLegacyProvince =
-    province !== "" &&
-    !REGION_GROUPS.some((group) =>
-      group.regions.some((region) => region === province)
-    );
-
   if (loading) {
     return (
       <main className="min-h-screen bg-[#f7f8fa] p-10">
@@ -204,10 +205,7 @@ export default function EditListingPage({
   return (
     <main className="min-h-screen bg-[#f7f8fa]">
       <div className="mx-auto max-w-4xl px-6 py-10">
-        <a
-          href="/seller"
-          className="text-sm font-semibold text-slate-700"
-        >
+        <a href="/seller" className="text-sm font-semibold text-slate-700">
           ← Back to Seller Dashboard
         </a>
 
@@ -230,11 +228,8 @@ export default function EditListingPage({
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
           >
             <option value="">Select Category *</option>
-
             {CATEGORIES.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
+              <option key={item}>{item}</option>
             ))}
           </select>
 
@@ -243,7 +238,6 @@ export default function EditListingPage({
             onChange={(e) => setQuantity(e.target.value)}
             placeholder="Quantity *"
             type="number"
-            min="0"
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
           />
 
@@ -252,10 +246,21 @@ export default function EditListingPage({
             onChange={(e) => setPrice(e.target.value)}
             placeholder="Numeric Price, e.g. 100"
             type="number"
-            min="0"
-            step="0.01"
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
           />
+
+          <select
+            value={currencyCode}
+            onChange={(e) => setCurrencyCode(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
+          >
+            <option value="">Select Currency *</option>
+            {CURRENCY_OPTIONS.map((item) => (
+              <option key={item.code} value={item.code}>
+                {item.code} — {item.name}
+              </option>
+            ))}
+          </select>
 
           <input
             value={priceNote}
@@ -299,26 +304,23 @@ export default function EditListingPage({
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
           />
 
-          <select
+          <input
             value={province}
             onChange={(e) => setProvince(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-white p-4 text-slate-950"
-            required
+            placeholder="Region / State / Province *"
+            className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
+          />
+
+          <select
+            value={countryCode}
+            onChange={(e) => setCountryCode(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
           >
-            <option value="">Province / State *</option>
-
-            {hasLegacyProvince && (
-              <option value={province}>{province}</option>
-            )}
-
-            {REGION_GROUPS.map((group) => (
-              <optgroup key={group.label} label={group.label}>
-                {group.regions.map((region) => (
-                  <option key={region} value={region}>
-                    {region}
-                  </option>
-                ))}
-              </optgroup>
+            <option value="">Select Country *</option>
+            {COUNTRY_OPTIONS.map((item) => (
+              <option key={item.code} value={item.code}>
+                {item.name} ({item.code})
+              </option>
             ))}
           </select>
 
@@ -333,13 +335,10 @@ export default function EditListingPage({
 
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-
-                if (file) {
-                  uploadListingImage(file);
-                }
+                if (file) uploadListingImage(file);
               }}
               className="mt-4 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-950"
             />
@@ -368,22 +367,12 @@ export default function EditListingPage({
             )}
           </div>
 
-          <div>
-            <label
-              htmlFor="expiresAt"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
-              Listing Expiration Date
-            </label>
-
-            <input
-              id="expiresAt"
-              type="date"
-              value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
-            />
-          </div>
+          <input
+            type="date"
+            value={expiresAt}
+            onChange={(e) => setExpiresAt(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 p-4 text-slate-950"
+          />
 
           <textarea
             rows={6}
@@ -396,7 +385,7 @@ export default function EditListingPage({
           <button
             type="submit"
             disabled={saving || uploadingImage}
-            className="w-full rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-xl bg-slate-950 py-4 font-semibold text-white disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

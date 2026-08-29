@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency, formatLocation } from "@/lib/international";
 
 type Listing = {
   id: string;
@@ -11,6 +12,8 @@ type Listing = {
   quantity: number;
   city: string;
   province: string | null;
+  country_code: string | null;
+  currency_code: string | null;
   description: string;
   image_url: string | null;
   status: string | null;
@@ -23,16 +26,9 @@ type Listing = {
   sku: string | null;
 };
 
-function formatPrice(price: number | null, priceNote?: string | null) {
+function formatPrice(price: number | null, priceNote?: string | null, currencyCode?: string | null) {
   if (priceNote) return priceNote;
-
-  if (price === null || price === undefined) return "Contact for pricing";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price);
+  return formatCurrency(price, currencyCode);
 }
 
 function formatDate(dateString: string | null) {
@@ -309,12 +305,11 @@ await supabase.from("listing_views").insert([
             </h1>
 
             <p className="mt-4 text-3xl font-bold text-slate-950">
-              {formatPrice(listing.price, listing.price_note)}
+              {formatPrice(listing.price, listing.price_note, listing.currency_code)}
             </p>
 
             <p className="mt-4 text-slate-700">
-              {listing.city}
-              {listing.province ? `, ${listing.province}` : ""}
+              {formatLocation(listing.city, listing.province, listing.country_code)}
             </p>
 
             {company && (
@@ -425,12 +420,11 @@ await supabase.from("listing_views").insert([
                       </h3>
 
                       <p className="mt-2 text-slate-600">
-                        {item.city}
-                        {item.province ? `, ${item.province}` : ""}
+                        {formatLocation(item.city, item.province, item.country_code)}
                       </p>
 
                       <p className="mt-2 font-semibold text-slate-950">
-                        {formatPrice(item.price, item.price_note)}
+                        {formatPrice(item.price, item.price_note, item.currency_code)}
                       </p>
                     </a>
                   ))}

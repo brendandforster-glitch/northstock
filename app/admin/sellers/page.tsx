@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { formatLocation, getCountryName } from "@/lib/international";
 
 type Company = {
   id: string;
@@ -12,6 +13,7 @@ type Company = {
   website: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
   created_at: string | null;
   listing_count?: number;
 };
@@ -59,7 +61,7 @@ export default function AdminSellersPage() {
     const { data: companyData, error } = await supabase
       .from("companies")
       .select(
-        "id, user_id, company_name, email, phone, website, city, province, created_at"
+        "id, user_id, company_name, email, phone, website, city, province, country_code, created_at"
       )
       .order("company_name", { ascending: true });
 
@@ -99,6 +101,7 @@ export default function AdminSellersPage() {
       company.website,
       company.city,
       company.province,
+      getCountryName(company.country_code),
     ]
       .filter(Boolean)
       .some((value) => value!.toLowerCase().includes(search));
@@ -154,7 +157,7 @@ export default function AdminSellersPage() {
           <input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search company, email, city, province, website..."
+            placeholder="Search company, email, city, region, country, website..."
             className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
           />
 
@@ -198,8 +201,7 @@ export default function AdminSellersPage() {
 
                       <p>
                         <strong>Location:</strong>{" "}
-                        {company.city || "Unknown"}
-                        {company.province ? `, ${company.province}` : ""}
+                        {formatLocation(company.city, company.province, company.country_code) || "Unknown"}
                       </p>
 
                       <p>

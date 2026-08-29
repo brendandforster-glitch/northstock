@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency, formatLocation } from "@/lib/international";
 
 type Listing = {
   id: string;
@@ -9,6 +10,8 @@ type Listing = {
   category: string;
   city: string;
   province: string | null;
+  country_code: string | null;
+  currency_code: string | null;
   price: number | null;
   price_note: string | null;
 };
@@ -22,15 +25,9 @@ type Lead = {
   listing?: Listing | null;
 };
 
-function formatPrice(price: number | null, priceNote?: string | null) {
+function formatPrice(price: number | null, priceNote?: string | null, currencyCode?: string | null) {
   if (priceNote) return priceNote;
-  if (price === null || price === undefined) return "Contact for pricing";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price);
+  return formatCurrency(price, currencyCode);
 }
 
 function formatDate(dateString: string | null) {
@@ -65,7 +62,7 @@ export default function SellerLeadsPage() {
 
     const { data: sellerListings, error: listingError } = await supabase
       .from("listings")
-      .select("id, title, category, city, province, price, price_note")
+      .select("id, title, category, city, province, country_code, currency_code, price, price_note")
       .eq("user_id", user.id);
 
     if (listingError) {
@@ -197,12 +194,11 @@ export default function SellerLeadsPage() {
                           </p>
 
                           <p className="mt-2 text-slate-700">
-                            {item.city}
-                            {item.province ? `, ${item.province}` : ""}
+                            {formatLocation(item.city, item.province, item.country_code)}
                           </p>
 
                           <p className="mt-2 font-semibold text-slate-950">
-                            {formatPrice(item.price, item.price_note)}
+                            {formatPrice(item.price, item.price_note, item.currency_code)}
                           </p>
                         </>
                       )}

@@ -1,8 +1,11 @@
+import { formatLocation } from "@/lib/international";
+
 type RecentCompany = {
   id: string;
   company_name: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
   created_at: string | null;
 };
 
@@ -12,6 +15,7 @@ type RecentListing = {
   category: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
   created_at: string | null;
 };
 
@@ -66,8 +70,7 @@ export default function RecentMarketplaceActivity({
                     {company.company_name || "Unnamed Company"}
                   </p>
                   <p className="text-sm text-slate-600">
-                    {company.city || "Unknown city"}
-                    {company.province ? `, ${company.province}` : ""}
+                    {formatLocation(company.city, company.province, company.country_code) || "Unknown location"}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {formatDate(company.created_at)}
@@ -98,8 +101,7 @@ export default function RecentMarketplaceActivity({
                     {listing.category || "Uncategorized"}
                   </p>
                   <p className="text-sm text-slate-600">
-                    {listing.city || "Unknown city"}
-                    {listing.province ? `, ${listing.province}` : ""}
+                    {formatLocation(listing.city, listing.province, listing.country_code) || "Unknown location"}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {formatDate(listing.created_at)}

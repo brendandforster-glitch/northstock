@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { isAdminUser } from "@/lib/server/auth";
+import { formatCurrency, formatLocation } from "@/lib/international";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,6 +18,7 @@ type SavedSearch = {
   category: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
   radius_km: number | null;
   keyword: string | null;
   email_alerts_enabled: boolean | null;
@@ -28,6 +30,8 @@ type Listing = {
   category: string | null;
   city: string | null;
   province: string | null;
+  country_code: string | null;
+  currency_code: string | null;
   price: number | null;
   price_note: string | null;
   condition: string | null;
@@ -55,7 +59,7 @@ export async function POST(request: Request) {
 
   const { data: searches, error: searchError } = await supabaseAdmin
     .from("saved_searches")
-    .select("id, user_id, name, category, city, province, radius_km, keyword, email_alerts_enabled")
+    .select("id, user_id, name, category, city, province, country_code, radius_km, keyword, email_alerts_enabled")
     .eq("email_alerts_enabled", true);
 
   if (searchError) {
@@ -64,7 +68,7 @@ export async function POST(request: Request) {
 
   const { data: listings, error: listingError } = await supabaseAdmin
     .from("listings")
-    .select("id, title, category, city, province, price, price_note, condition, brand, model, sku, description")
+    .select("id, title, category, city, province, country_code, currency_code, price, price_note, condition, brand, model, sku, description")
     .eq("status", "active")
     .gt("expires_at", new Date().toISOString())
     .order("created_at", { ascending: false })
@@ -121,8 +125,8 @@ export async function POST(request: Request) {
               <h3 style="margin-top: 0;">${escapeHtml(listing.title)}</h3>
               <p><strong>Category:</strong> ${escapeHtml(listing.category || "Not listed")}</p>
               <p><strong>Condition:</strong> ${escapeHtml(listing.condition || "Not listed")}</p>
-              <p><strong>Location:</strong> ${escapeHtml(listing.city || "")}${listing.province ? ", " + escapeHtml(listing.province) : ""}</p>
-              <p><strong>Price:</strong> ${escapeHtml(formatPrice(listing.price, listing.price_note))}</p>
+              <p><strong>Location:</strong> ${escapeHtml(formatLocation(listing.city, listing.province, listing.country_code))}</p>
+              <p><strong>Price:</strong> ${escapeHtml(formatPrice(listing.price, listing.price_note, listing.currency_code))}</p>
             </div>
 
             <p>
@@ -165,7 +169,11 @@ export async function POST(request: Request) {
 }
 
 function listingMatchesSearch(listing: Listing, search: SavedSearch) {
-  if (search.category && listing.category !== search.category) {
+  if (search.category && !search.category.split(",").map((value) => value.trim()).includes(listing.category || "")) {
+    return false;
+  }
+
+  if (search.country_code && listing.country_code !== search.country_code) {
     return false;
   }
 
@@ -207,15 +215,9 @@ function listingMatchesSearch(listing: Listing, search: SavedSearch) {
   return true;
 }
 
-function formatPrice(price: number | null, priceNote: string | null) {
+function formatPrice(price: number | null, priceNote: string | null, currencyCode: string | null) {
   if (priceNote) return priceNote;
-  if (price === null || price === undefined) return "Contact for pricing";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price);
+  return formatCurrency(price, currencyCode);
 }
 
 function escapeHtml(text: string) {

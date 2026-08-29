@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   const { data: listings, error } = await supabaseAdmin
     .from("listings")
     .select(
-      "title, category, quantity, condition, price, price_note, city, province, brand, model, sku, description, image_url, status, expires_at, created_at"
+      "title, category, quantity, condition, price, price_note, currency_code, city, province, country_code, brand, model, sku, description, image_url, status, expires_at, created_at"
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -42,8 +42,10 @@ export async function POST(request: Request) {
     Condition: item.condition || "",
     Price: item.price ?? "",
     "Price Note": item.price_note || "",
+    "Currency Code": item.currency_code || "USD",
     City: item.city || "",
-    "Province / State": item.province || "",
+    "Region / State / Province": item.province || "",
+    "Country Code": item.country_code || "",
     Brand: item.brand || "",
     Model: item.model || "",
     SKU: item.sku || "",
@@ -65,7 +67,7 @@ export async function POST(request: Request) {
 
   const headers = Object.keys(rows[0] || {
     Title: "", Category: "", Quantity: "", Condition: "", Price: "",
-    "Price Note": "", City: "", "Province / State": "", Brand: "",
+    "Price Note": "", "Currency Code": "", City: "", "Region / State / Province": "", "Country Code": "", Brand: "",
     Model: "", SKU: "", Description: "", "Image URL": "", Status: "",
     "Expires At": "", "Created At": "",
   });
