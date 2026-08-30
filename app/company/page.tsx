@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { COUNTRY_OPTIONS, formatLocation } from "@/lib/international";
+import MarketplaceHeader from "@/app/components/MarketplaceHeader";
 
 export default function CompanyPage() {
   const [loading, setLoading] = useState(true);
@@ -237,32 +238,9 @@ const companyStrength =
 
   return (
     <main className="min-h-screen bg-[#f7f8fa]">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
-          <a href="/">
-            <img
-              src="/northstock-logo.png"
-              alt="NorthStock"
-              className="h-12 w-auto"
-            />
-          </a>
+      <MarketplaceHeader loggedIn />
 
-          <div className="flex flex-wrap items-center gap-4">
-            <a href="/seller" className="text-sm font-bold text-slate-950">
-              Seller Dashboard
-            </a>
-
-            <a
-              href="/list-inventory"
-              className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Add Inventory
-            </a>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-5xl px-6 py-10">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
         <h1 className="text-4xl font-bold text-slate-950">Company Profile</h1>
 
         <p className="mt-2 text-slate-700">

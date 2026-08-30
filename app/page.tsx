@@ -3,6 +3,7 @@
 import { CATEGORY_DETAILS } from "@/lib/categories";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatLocation } from "@/lib/international";
+import MarketplaceHeader from "@/app/components/MarketplaceHeader";
 import { useEffect, useState } from "react";
 
 type FeaturedListing = {
@@ -168,11 +169,6 @@ export default function Home() {
     loadHomeData();
   }, []);
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  }
-
   function handleHomepageSearch(event: React.FormEvent) {
     event.preventDefault();
     const search = searchTerm.trim();
@@ -209,53 +205,19 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#f7f9fc] text-slate-950">
-      <header className="border-b border-white/10 bg-[#020b20] text-white">
-        <div className="mx-auto flex max-w-[1600px] items-center gap-7 px-5 py-4 lg:px-8">
-          <a href="/" className="shrink-0" aria-label="NorthStock home">
-            <img src="/northstock-logo.png" alt="NorthStock" className="h-10 w-auto brightness-0 invert md:h-11" />
-          </a>
-
-          <nav className="ml-auto hidden items-center gap-7 text-sm font-semibold text-slate-200 lg:flex">
-            <a href="/listings" className="transition hover:text-blue-300">Browse Inventory</a>
-            <a href="/buyer-requests" className="transition hover:text-blue-300">Buyer Requests</a>
-            <a href="/list-inventory" className="transition hover:text-blue-300">Sell Inventory</a>
-            <a href="/help" className="transition hover:text-blue-300">Help Centre</a>
-          </nav>
-
-          <div className="ml-auto flex shrink-0 items-center gap-3 lg:ml-4">
-            {loggedIn ? (
-              <>
-                <a href="/seller" className="hidden text-sm font-semibold text-slate-200 hover:text-white sm:block">Dashboard</a>
-                <button onClick={handleLogout} className="rounded-xl border border-white/20 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/10">Log Out</button>
-              </>
-            ) : (
-              <>
-                <a href="/login" className="hidden text-sm font-semibold text-slate-200 hover:text-white sm:block">Log In</a>
-                <a href="/login" className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 md:px-5">Create Free Account</a>
-              </>
-            )}
-          </div>
-        </div>
-
-        <nav className="flex gap-6 overflow-x-auto border-t border-white/10 px-5 py-3 text-sm font-semibold text-slate-300 lg:hidden">
-          <a href="/listings" className="shrink-0">Browse Inventory</a>
-          <a href="/buyer-requests" className="shrink-0">Buyer Requests</a>
-          <a href="/list-inventory" className="shrink-0">Sell Inventory</a>
-          <a href="/help" className="shrink-0">Help Centre</a>
-        </nav>
-      </header>
+      <MarketplaceHeader theme="dark" loggedIn={loggedIn} />
 
       <section className="relative isolate overflow-hidden bg-[#03112e] text-white">
         <div className="absolute inset-0 -z-20" style={{ background: "radial-gradient(circle at 73% 45%, rgba(37,99,235,.30), transparent 34%), radial-gradient(circle at 15% 15%, rgba(30,64,175,.18), transparent 28%), linear-gradient(125deg, #020617 0%, #03112e 52%, #071b46 100%)" }} />
         <div className="absolute inset-0 -z-10 opacity-20" style={{ backgroundImage: "linear-gradient(rgba(96,165,250,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(96,165,250,.16) 1px, transparent 1px)", backgroundSize: "52px 52px", maskImage: "linear-gradient(to bottom, transparent, black 28%, black 70%, transparent)" }} />
 
-        <div className="mx-auto grid max-w-[1500px] items-center gap-14 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-20 xl:py-24">
+        <div className="mx-auto grid max-w-[1500px] items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14 lg:px-8 lg:py-20 xl:py-24">
           <div className="relative z-10">
             <div className="inline-flex items-center gap-3 rounded-full border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-sm font-bold text-blue-100 backdrop-blur">
               <span className="h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_14px_#60a5fa]" />
               Free for buyers and sellers
             </div>
-            <h1 className="mt-7 max-w-3xl text-5xl font-black tracking-[-0.045em] sm:text-6xl xl:text-7xl">The global commercial inventory marketplace.</h1>
+            <h1 className="mt-7 max-w-3xl text-4xl font-black tracking-[-0.045em] sm:text-6xl xl:text-7xl">The global commercial inventory marketplace.</h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">Source used, surplus, overstock, and hard-to-find equipment directly from businesses worldwide.</p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -276,7 +238,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative min-h-[520px] lg:min-h-[560px]">
+          <div className="relative min-h-[440px] sm:min-h-[520px] lg:min-h-[560px]">
             <HeroNetwork />
             <div className="relative z-10 flex h-full flex-col justify-center gap-4 py-10 sm:pl-16 lg:pl-20 xl:pl-28">
               {heroListings.length > 0 ? heroListings.map((item, index) => (
@@ -416,7 +378,7 @@ export default function Home() {
       </section>
 
       <section className="border-y border-slate-200 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
           <div>
             <p className="text-sm font-extrabold uppercase tracking-[0.18em] text-blue-600">Why NorthStock</p>
             <h2 className="mt-3 text-4xl font-black tracking-tight">Built specifically for commercial buyers and suppliers.</h2>

@@ -1,6 +1,7 @@
 "use client";
 
 import { CATEGORIES } from "@/lib/categories";
+import MarketplaceHeader from "@/app/components/MarketplaceHeader";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -348,46 +349,9 @@ export default function ListingsPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
-          <a href="/">
-            <img
-              src="/northstock-logo.png"
-              alt="NorthStock"
-              className="h-12 w-auto"
-            />
-          </a>
+      <MarketplaceHeader active="browse" loggedIn />
 
-          <div className="flex flex-wrap items-center gap-4">
-            <a href="/" className="text-sm font-bold text-slate-950">
-              Home
-            </a>
-
-            <a
-              href="/saved-searches"
-              className="text-sm font-bold text-slate-950"
-            >
-              Saved Searches
-            </a>
-
-            <a
-              href="/saved-listings"
-              className="text-sm font-bold text-slate-950"
-            >
-              Saved Listings
-            </a>
-
-            <button
-              onClick={handleLogout}
-              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <section className="mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[280px_1fr]">
+      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[280px_1fr] lg:gap-8">
         <aside className="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold">Filters</h2>
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getCountryName } from "@/lib/international";
+import MarketplaceHeader from "@/app/components/MarketplaceHeader";
 
 type SavedSearch = {
   id: string;
@@ -96,29 +97,9 @@ export default function SavedSearchesPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <a href="/">
-            <img
-              src="/northstock-logo.png"
-              alt="NorthStock"
-              className="h-12 w-auto"
-            />
-          </a>
+      <MarketplaceHeader loggedIn />
 
-          <div className="flex items-center gap-4">
-            <a href="/listings" className="text-sm font-semibold text-slate-700">
-              Browse Inventory
-            </a>
-
-            <a href="/seller" className="text-sm font-semibold text-slate-700">
-              Seller Dashboard
-            </a>
-          </div>
-        </div>
-      </header>
-
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
         <h1 className="text-4xl font-bold">Saved Searches</h1>
 
         <p className="mt-2 text-slate-700">

@@ -1,6 +1,7 @@
 "use client";
 
 import { CATEGORIES } from "@/lib/categories";
+import MarketplaceHeader from "@/app/components/MarketplaceHeader";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -912,7 +913,8 @@ ${invalidRows
 
   return (
     <main className="min-h-screen bg-[#f7f8fa]">
-      <div className="mx-auto max-w-5xl px-6 py-16">
+      <MarketplaceHeader active="sell" loggedIn />
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16">
         <h1 className="text-4xl font-extrabold text-slate-950">
           List Your Inventory
         </h1>

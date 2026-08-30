@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatLocation } from "@/lib/international";
+import MarketplaceHeader from "@/app/components/MarketplaceHeader";
 import { useEffect, useState } from "react";
 
 type Listing = {
@@ -159,11 +160,6 @@ export default function SellerPage() {
     }
 
     setLoading(false);
-  }
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    window.location.href = "/";
   }
 
   async function deleteListing(id: string) {
@@ -380,77 +376,9 @@ export default function SellerPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
-      <header className="overflow-x-auto border-b border-slate-200 bg-white">
-        <div className="mx-auto flex min-w-max max-w-[1600px] items-center gap-8 px-6 py-4">
-          <a href="/" className="shrink-0">
-            <img
-              src="/northstock-logo.png"
-              alt="NorthStock"
-              className="h-11 w-auto"
-            />
-          </a>
+      <MarketplaceHeader active="dashboard" loggedIn />
 
-          <nav className="ml-auto flex items-center gap-6 whitespace-nowrap text-sm font-semibold text-slate-700">
-            <a
-              href="/listings"
-              className="transition hover:text-blue-600"
-            >
-              Browse
-            </a>
-
-            <a
-              href="/buyer-requests"
-              className="transition hover:text-blue-600"
-            >
-              Buyer Requests
-            </a>
-
-            <a
-              href="/list-inventory"
-              className="transition hover:text-blue-600"
-            >
-              Sell Inventory
-            </a>
-
-            <a
-              href="/help"
-              className="transition hover:text-blue-600"
-            >
-              Help
-            </a>
-
-            <a
-              href="/#contact"
-              className="transition hover:text-blue-600"
-            >
-              Contact
-            </a>
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-4 whitespace-nowrap border-l border-slate-200 pl-6 text-sm font-bold">
-            <a href="/seller" className="text-blue-600">
-              Dashboard
-            </a>
-
-            <a
-              href="/seller/buyer-responses"
-              className="transition hover:text-blue-600"
-            >
-              My Responses
-            </a>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-xl bg-red-600 px-5 py-3 text-white transition hover:bg-red-700"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <section className="mx-auto max-w-7xl px-6 py-10">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-4xl font-bold">

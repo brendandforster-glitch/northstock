@@ -7,9 +7,19 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
 
   async function signUp() {
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          newsletter_opt_in: newsletterOptIn,
+          newsletter_audience: "member",
+        },
+      },
+    });
     if (error) alert(error.message);
     else alert("Account created. You can now log in.");
   }
@@ -95,6 +105,21 @@ export default function LoginPage() {
             type="password"
             onChange={(e) => setPassword(e.target.value)}
           />
+
+          {mode === "signup" && (
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-300 bg-slate-50 p-4 text-left text-sm font-medium leading-6 text-slate-700">
+              <input
+                type="checkbox"
+                checked={newsletterOptIn}
+                onChange={(e) => setNewsletterOptIn(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
+              />
+              <span>
+                Email me NorthStock marketplace updates and relevant
+                opportunities. I can unsubscribe at any time.
+              </span>
+            </label>
+          )}
 
           <button
             onClick={handleSubmit}

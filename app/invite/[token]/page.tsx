@@ -29,6 +29,7 @@ export default function AcceptInvitePage({
   const [loading, setLoading] = useState(true);
   const [invite, setInvite] = useState<Invite | null>(null);
   const [password, setPassword] = useState("");
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -104,6 +105,12 @@ export default function AcceptInvitePage({
       await supabase.auth.signUp({
         email: invite.email,
         password,
+        options: {
+          data: {
+            newsletter_opt_in: newsletterOptIn,
+            newsletter_audience: "seller",
+          },
+        },
       });
 
     if (signUpError) {
@@ -208,6 +215,19 @@ export default function AcceptInvitePage({
               type="password"
               className="w-full rounded-xl border border-slate-300 p-4 text-slate-950 placeholder:text-slate-500"
             />
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-300 bg-slate-50 p-4 text-left text-sm font-medium leading-6 text-slate-700">
+              <input
+                type="checkbox"
+                checked={newsletterOptIn}
+                onChange={(e) => setNewsletterOptIn(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
+              />
+              <span>
+                Email me NorthStock marketplace updates and relevant
+                opportunities. I can unsubscribe at any time.
+              </span>
+            </label>
 
             <button
               type="submit"
