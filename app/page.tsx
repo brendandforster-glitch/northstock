@@ -470,7 +470,17 @@ export default function Home() {
           </div>
 
           <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2026 NorthStock. All rights reserved.</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <p>© 2026 NorthStock. All rights reserved.</p>
+              <a
+                href="https://grovegauge.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-slate-400 transition hover:text-white"
+              >
+                Created by Grove &amp; Gauge
+              </a>
+            </div>
             <div className="flex flex-wrap gap-5">
               <a href="/terms" className="hover:text-white">Terms</a>
               <a href="/privacy" className="hover:text-white">Privacy</a>
