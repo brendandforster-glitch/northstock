@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://northstock.ca"),
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
-  icons: { icon: "/northstock-logo.png", apple: "/northstock-logo.png" },
+  icons: { icon: "/icon.svg" },
 
   openGraph: {
     title: "NorthStock",
