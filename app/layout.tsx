@@ -87,7 +87,7 @@ export default function RootLayout({
   </Script>
 
   <Script
-  src="https://strangemetrics.com/sm.js"
+  src="https://www.strangemetrics.com/sm.js"
   data-project="sm_a854d3d60fed5c45b2094ec533e65f65"
   strategy="afterInteractive"
 />
