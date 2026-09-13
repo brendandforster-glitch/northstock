@@ -85,6 +85,13 @@ export default function RootLayout({
       gtag('config', 'G-G2HZEZPEXL');
     `}
   </Script>
+
+  <Script
+  src="https://strangemetrics.com/sm.js"
+  data-project="sm_a854d3d60fed5c45b2094ec533e65f65"
+  strategy="afterInteractive"
+/>
+
 </body>
     </html>
   );
